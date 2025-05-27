@@ -1,0 +1,47 @@
+/* Sidebar uses project palette from style.css */
+.sidebar {
+    background: var(--background-white);
+    border-right: 1.5px solid var(--border-navy);
+    min-height: 100vh;
+}
+.sidebar .nav-link {
+    color: var(--secondary-navy);
+    font-weight: 500;
+    border-radius: 0.5rem;
+    margin-bottom: 4px;
+    transition: background 0.2s, color 0.2s;
+    padding: 0.65rem 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.sidebar .nav-link.active, .sidebar .nav-link:hover {
+    background: linear-gradient(135deg, var(--primary-gold) 0%, var(--gold-hover) 100%);
+    color: var(--secondary-navy) !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px var(--shadow-gold);
+}
+.sidebar .nav-link i {
+    font-size: 1.2em;
+    vertical-align: middle;
+    color: var(--primary-gold);
+    transition: color 0.2s;
+}
+.sidebar .nav-link.active i, .sidebar .nav-link:hover i {
+    color: var(--secondary-navy);
+}
+.sidebar .fs-4 {
+    letter-spacing: 1px;
+    color: var(--primary-gold);
+}
+.sidebar hr {
+    border-color: var(--border-navy);
+}
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100% !important;
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1.5px solid var(--border-navy);
+    }
+} 

@@ -1,0 +1,84 @@
+CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
+
+## 1. Project Setup
+- [x] Organize folders: public/, assets/, database/, includes/, pages/ (admin/, seller/, buyer/ folders not found, but pages/ used)
+- [x] Use Bootstrap for responsive UI (Bootstrap included in index.php, login.php, register.php)
+- [x] Integrate Google Font (Inter included)
+- [x] Set up MySQL connection config (config.php, db.php)
+
+## 2. Database
+- [x] Recreate schema from Node.js version in MySQL (canteen.sql exists)
+- [ ] Ensure all tables, foreign keys, and constraints match requirements (needs review)
+- [ ] Add SQL scripts for backup/restore (not found)
+
+## 3. Authentication & User Roles
+- [x] Implement registration (buyer only) and login (all roles) in PHP (register.php, login.php)
+- [x] Enforce role-based access (session checks in pages)
+- [x] Admin can create/manage sellers and buyers (admin_users.php)
+
+## 4. Admin Features
+- [x] User management: add/edit/delete users, assign roles (admin_users.php)
+- [x] Stall management: add/edit/delete stalls, assign sellers (admin_stalls.php)
+- [ ] Database backup/restore UI (not found)
+- [ ] Basic analytics/reporting (dashboard.php has placeholders only)
+
+## 5. Seller Features
+- [ ] Product management: CRUD for products, image upload (not found)
+- [ ] Order management: view/process/update order status (not found)
+- [ ] Payment verification: show static QR code, receive buyer-uploaded QR receipt, approve/decline orders (QR code image exists, logic not found)
+- [ ] Order voiding: auto-cancel unclaimed orders after time limit (not found)
+- [ ] Basic sales analytics (not found)
+
+## 6. Buyer Features
+- [x] Self-registration (register.php)
+- [ ] Browse canteens, stalls, products (not found)
+- [ ] Place orders (max 5 items/order) (not found)
+- [ ] Choose payment method, view static QR code, upload payment receipt (not found)    
+- [ ] Submit receipt to seller for verification (not found)
+- [ ] Track order status (not found)
+- [ ] Leave reviews (not found)
+
+## 7. Order & Payment Flow
+- [ ] Implement order placement, payment, and status update logic (not found)
+- [ ] Display static QR code, handle receipt upload and approval (not found)
+- [ ] Seller approves/declines order based on uploaded receipt (not found)
+- [ ] Auto-void orders after time limit (not found)
+
+## 8. Announcement System
+- [ ] Admin/seller can create announcements (with images) (not found)
+- [ ] Buyers can view/mark as read (not found)
+- [ ] Store images and track views (not found)
+
+## 9. Security
+- [x] Sanitize all inputs (partially, needs review)
+- [x] Hash passwords (password_hash used)
+- [x] Enforce access control on all endpoints (session checks in pages)
+- [ ] Secure file uploads (not found)
+
+## 10. Other
+- [x] Document all changes/fixes in memory.txt
+- [ ] Note any missing modules/files and fixes (partially, needs review)
+- [x] Responsive design for all pages (Bootstrap used, needs review for all pages)
+
+## UI/UX
+- [x] Use Bootstrap and Google Font for a clean, modern look
+- [x] No admin template; use Bootstrap defaults
+- [x] QR code payment: show static QR code (qrcode-placeholder.jpg exists), buyer uploads receipt, seller verifies (logic not found)
+
+## ARCHITECTURE
+- [x] Only one index.php file in public/ (serves as main entry point)
+- [x] Navigation/layout components as includes (topbar.php, sidebar.php)
+- [x] Use ?page= in URL to load specific pages/components
+- [x] All role-based and feature pages included via this routing mechanism
+
+## COLOR PALETTE
+- Gold: #d6b243
+- Deep Blue: #170e63
+- White: #ffffff
+
+---
+
+**Legend:**
+- [x] = Complete/In Progress
+- [ ] = Not Started/Not Found
+- (needs review) = May be partial or needs further checking 
