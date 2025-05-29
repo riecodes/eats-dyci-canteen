@@ -216,6 +216,110 @@ if ($selected_canteen && !$selected_stall) {
     // Stop here if no stall selected
     return;
 }
+
+// After stall selection, show all products for the selected stall as cards
+if ($selected_canteen && $selected_stall) {
+    // Fetch products for selected stall
+    $stmt = $pdo->prepare('SELECT * FROM products WHERE stall_id = ? ORDER BY name ASC');
+    $stmt->execute([$selected_stall]);
+    $products = $stmt->fetchAll();
+    echo '<div class="row g-4 mb-4">';
+    foreach ($products as $product) {
+        echo '<div class="col-md-4">';
+        echo '<div class="card h-100 shadow-sm">';
+        $img = htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg');
+        echo '<img src="' . $img . '" class="card-img-top" alt="Product Image" style="max-height:180px;object-fit:cover;">';
+        echo '<div class="card-body">';
+        echo '<h6 class="card-title mb-1">' . htmlspecialchars($product['name']) . '</h6>';
+        echo '<div class="mb-1 text-muted">₱' . number_format($product['price'],2) . '</div>';
+        echo '<div class="mb-2 small">Stock: ' . (int)$product['stock'] . '</div>';
+        echo '<form method="post" class="d-flex align-items-center gap-2">';
+        echo '<input type="hidden" name="product_id" value="' . $product['id'] . '">';
+        echo '<input type="number" class="form-control form-control-sm" name="quantity" min="1" max="' . (int)$product['stock'] . '" value="1" style="width:70px;">';
+        $cart_count = array_sum($cart);
+        $disabled = ($product['stock'] < 1 || $cart_count >= 5) ? 'disabled' : '';
+        echo '<button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" ' . $disabled . '>Add</button>';
+        echo '</form>';
+        echo '</div></div></div>';
+    }
+    echo '</div>';
+    // Cart and checkout section
+    if (!empty($cart)) {
+        // Fetch seller QR code
+        $stmt = $pdo->prepare('SELECT s.seller_id, u.qr_code FROM stalls s JOIN users u ON s.seller_id = u.id WHERE s.id = ?');
+        $stmt->execute([$selected_stall]);
+        $seller = $stmt->fetch();
+        $seller_qr = $seller['qr_code'] ?? '../assets/imgs/qrcode-placeholder.jpg';
+        // Cart summary
+        echo '<div class="mt-4">';
+        echo '<h5>Your Cart</h5>';
+        echo '<form method="post" enctype="multipart/form-data">';
+        echo '<table class="table table-bordered align-middle">';
+        echo '<thead class="table-light"><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Subtotal</th><th>Action</th></tr></thead><tbody>';
+        $total = 0;
+        foreach ($cart as $product_id => $qty) {
+            $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+            $stmt->execute([$product_id]);
+            $prod = $stmt->fetch();
+            if (!$prod) continue;
+            $subtotal = $prod['price'] * $qty;
+            $total += $subtotal;
+            echo '<tr>';
+            echo '<td>' . htmlspecialchars($prod['name']) . '</td>';
+            echo '<td>₱' . number_format($prod['price'],2) . '</td>';
+            echo '<td><input type="number" name="quantities[' . $product_id . ']" value="' . $qty . '" min="1" max="' . (int)$prod['stock'] . '" class="form-control form-control-sm" style="width:70px;"></td>';
+            echo '<td>₱' . number_format($subtotal,2) . '</td>';
+            echo '<td><button type="submit" name="remove_from_cart" value="1" class="btn btn-danger btn-sm" formaction="" formmethod="post" onclick="this.form.product_id.value=' . $product_id . ';">Remove</button>';
+            echo '<input type="hidden" name="product_id" value="' . $product_id . '"></td>';
+            echo '</tr>';
+        }
+        echo '</tbody><tfoot><tr><th colspan="3" class="text-end">Total</th><th colspan="2">₱' . number_format($total,2) . '</th></tr></tfoot></table>';
+        echo '<button type="submit" name="update_cart" class="btn btn-secondary">Update Cart</button> ';
+        echo '<button type="submit" name="proceed_checkout" class="btn btn-primary">Proceed to Checkout</button>';
+        echo '</form>';
+        echo '</div>';
+        // Checkout section
+        if (isset($_POST['proceed_checkout']) && empty($order_success)) {
+            echo '<div class="mt-4">';
+            echo '<h5>Checkout</h5>';
+            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;"></div>';
+            echo '<form method="post" enctype="multipart/form-data">';
+            echo '<div class="mb-3">';
+            echo '<label class="form-label">Upload GCash Receipt (portrait image required)</label>';
+            echo '<input type="file" class="form-control" name="receipt_image" accept="image/*" required>';
+            echo '</div>';
+            echo '<div class="mb-3">';
+            echo '<label class="form-label">Order Note (optional)</label>';
+            echo '<textarea class="form-control" name="order_note" rows="2" maxlength="255"></textarea>';
+            echo '</div>';
+            echo '<button type="submit" name="place_order" class="btn btn-success" disabled id="confirmBtn">I already sent the payment and uploaded the QR code</button>';
+            echo '</form>';
+            echo '<script>
+var receiptInput = document.querySelector("input[name=receipt_image]");
+var confirmBtn = document.getElementById("confirmBtn");
+if(receiptInput && confirmBtn) {
+  receiptInput.addEventListener("change", function(e) {
+    var f = e.target.files[0];
+    if(f){
+      var img = new Image();
+      img.onload = function(){
+        if(img.height <= img.width){
+          alert("Receipt must be portrait.");
+          e.target.value = "";
+          confirmBtn.disabled = true;
+        } else {
+          confirmBtn.disabled = false;
+        }
+      };
+      img.src = URL.createObjectURL(f);
+    }
+  });
+}
+</script>';
+            echo '</div>';
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
