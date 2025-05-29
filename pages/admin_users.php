@@ -58,6 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
     $edit_email = trim($_POST['edit_email'] ?? '');
     $edit_role = $_POST['edit_role'] ?? '';
     $edit_password = $_POST['edit_password'] ?? '';
+    $edit_department = $_POST['edit_department'] ?? null;
+    $edit_position = $_POST['edit_position'] ?? null;
     if (!$edit_name || !$edit_email || !$edit_role) {
         $edit_error = 'All fields are required.';
     } elseif (!filter_var($edit_email, FILTER_VALIDATE_EMAIL)) {
@@ -72,18 +74,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
         } else {
             if ($edit_password) {
                 $hash = password_hash($edit_password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, password = ? WHERE id = ?');
-                if ($stmt->execute([$edit_name, $edit_email, $edit_role, $hash, $edit_id])) {
-                    $edit_success = 'User updated successfully!';
+                if ($edit_role === 'buyer') {
+                    $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, password = ?, department = ?, position = ? WHERE id = ?');
+                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $hash, $edit_department, $edit_position, $edit_id])) {
+                        $edit_success = 'User updated successfully!';
+                    } else {
+                        $edit_error = 'Failed to update user.';
+                    }
                 } else {
-                    $edit_error = 'Failed to update user.';
+                    $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, password = ? WHERE id = ?');
+                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $hash, $edit_id])) {
+                        $edit_success = 'User updated successfully!';
+                    } else {
+                        $edit_error = 'Failed to update user.';
+                    }
                 }
             } else {
-                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?');
-                if ($stmt->execute([$edit_name, $edit_email, $edit_role, $edit_id])) {
-                    $edit_success = 'User updated successfully!';
+                if ($edit_role === 'buyer') {
+                    $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, department = ?, position = ? WHERE id = ?');
+                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $edit_department, $edit_position, $edit_id])) {
+                        $edit_success = 'User updated successfully!';
+                    } else {
+                        $edit_error = 'Failed to update user.';
+                    }
                 } else {
-                    $edit_error = 'Failed to update user.';
+                    $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?');
+                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $edit_id])) {
+                        $edit_success = 'User updated successfully!';
+                    } else {
+                        $edit_error = 'Failed to update user.';
+                    }
                 }
             }
         }
@@ -161,6 +181,32 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
                       <option value="buyer" <?= $user['role'] === 'buyer' ? 'selected' : '' ?>>Buyer</option>
                     </select>
                   </div>
+                  <?php if ($user['role'] === 'buyer'): ?>
+                    <div class="mb-3">
+                      <label class="form-label">Identification</label>
+                      <select class="form-select" name="edit_identification">
+                        <option value="Student" <?= ($user['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
+                        <option value="Staff" <?= ($user['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
+                        <option value="Teacher" <?= ($user['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Department</label>
+                      <select class="form-select" name="edit_department">
+                        <option value="CPE" <?= ($user['department'] ?? '') === 'CPE' ? 'selected' : '' ?>>CPE</option>
+                        <option value="CS" <?= ($user['department'] ?? '') === 'CS' ? 'selected' : '' ?>>CS</option>
+                        <option value="IT" <?= ($user['department'] ?? '') === 'IT' ? 'selected' : '' ?>>IT</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Position</label>
+                      <select class="form-select" name="edit_position">
+                        <option value="Student" <?= ($user['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
+                        <option value="Staff" <?= ($user['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
+                        <option value="Teacher" <?= ($user['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
+                      </select>
+                    </div>
+                  <?php endif; ?>
                   <div class="mb-3">
                     <label class="form-label">New Password (leave blank to keep current)</label>
                     <input type="password" class="form-control" name="edit_password" autocomplete="new-password">
