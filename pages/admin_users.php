@@ -15,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
     $role = $_POST['role'] ?? '';
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
+    $department = $_POST['department'] ?? null;
+    $position = $_POST['position'] ?? null;
     if (!$name || !$email || !$role || !$password || !$confirm_password) {
         $add_error = 'All fields are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -30,12 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
             $add_error = 'Email already registered.';
         } else {
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)');
-            if ($stmt->execute([$name, $email, $hash, $role])) {
-                header('Location: ' . $_SERVER['REQUEST_URI']);
-                exit;
+            if ($role === 'buyer') {
+                $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role, department, position) VALUES (?, ?, ?, ?, ?, ?)');
+                if ($stmt->execute([$name, $email, $hash, $role, $department, $position])) {
+                    $add_success = 'User added successfully!';
+                } else {
+                    $add_error = 'Failed to add user.';
+                }
             } else {
-                $add_error = 'Failed to add user.';
+                $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)');
+                if ($stmt->execute([$name, $email, $hash, $role])) {
+                    $add_success = 'User added successfully!';
+                } else {
+                    $add_error = 'Failed to add user.';
+                }
             }
         }
     }
@@ -101,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
         }
     }
 }
-$stmt = $pdo->query('SELECT id, name, email, role FROM users ORDER BY id ASC');
+$stmt = $pdo->query('SELECT id, name, email, role, department, position FROM users ORDER BY id ASC');
 $users = $stmt->fetchAll();
 
 // Remove the currently logged-in admin from the user management list and actions
@@ -168,13 +178,13 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Role</label>
-                    <select class="form-select" name="edit_role" required>
+                    <select class="form-select edit-role-select" name="edit_role" required>
                       <option value="seller" <?= $user['role'] === 'seller' ? 'selected' : '' ?>>Seller</option>
                       <option value="buyer" <?= $user['role'] === 'buyer' ? 'selected' : '' ?>>Buyer</option>
                     </select>
                   </div>
                   <?php if ($user['role'] === 'buyer'): ?>
-                    <div class="mb-3">
+                    <div class="mb-3 edit-buyer-extra">
                       <label class="form-label">Department</label>
                       <select class="form-select" name="edit_department">
                         <option value="CPE" <?= ($user['department'] ?? '') === 'CPE' ? 'selected' : '' ?>>CPE</option>
@@ -182,12 +192,29 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
                         <option value="IT" <?= ($user['department'] ?? '') === 'IT' ? 'selected' : '' ?>>IT</option>
                       </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 edit-buyer-extra">
                       <label class="form-label">Position</label>
                       <select class="form-select" name="edit_position">
                         <option value="Student" <?= ($user['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
                         <option value="Staff" <?= ($user['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
                         <option value="Teacher" <?= ($user['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
+                      </select>
+                    </div>
+                  <?php else: ?>
+                    <div class="mb-3 edit-buyer-extra" style="display:none;">
+                      <label class="form-label">Department</label>
+                      <select class="form-select" name="edit_department">
+                        <option value="CPE">CPE</option>
+                        <option value="CS">CS</option>
+                        <option value="IT">IT</option>
+                      </select>
+                    </div>
+                    <div class="mb-3 edit-buyer-extra" style="display:none;">
+                      <label class="form-label">Position</label>
+                      <select class="form-select" name="edit_position">
+                        <option value="Student">Student</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Teacher">Teacher</option>
                       </select>
                     </div>
                   <?php endif; ?>
@@ -240,10 +267,53 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
               <label for="add_confirm_password" class="form-label">Confirm Password</label>
               <input type="password" class="form-control" id="add_confirm_password" name="confirm_password" required>
             </div>
+            <div class="mb-3 buyer-extra" style="display:none;">
+              <label class="form-label">Department</label>
+              <select class="form-select" id="add_department" name="department">
+                <option value="CPE">CPE</option>
+                <option value="CS">CS</option>
+                <option value="IT">IT</option>
+              </select>
+            </div>
+            <div class="mb-3 buyer-extra" style="display:none;">
+              <label class="form-label">Position</label>
+              <select class="form-select" id="add_position" name="position">
+                <option value="Student">Student</option>
+                <option value="Staff">Staff</option>
+                <option value="Teacher">Teacher</option>
+              </select>
+            </div>
+            <script>
+            document.getElementById('add_role').addEventListener('change', function() {
+              var show = this.value === 'buyer';
+              document.querySelectorAll('.buyer-extra').forEach(function(el) {
+                el.style.display = show ? '' : 'none';
+              });
+            });
+            </script>
             <button type="submit" class="btn btn-primary">Add User</button>
           </form>
         </div>
       </div>
     </div>
   </div>
-</div> 
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.edit-role-select').forEach(function(select) {
+    select.addEventListener('change', function() {
+      var modal = select.closest('.modal');
+      var show = select.value === 'buyer';
+      modal.querySelectorAll('.edit-buyer-extra').forEach(function(el) {
+        el.style.display = show ? '' : 'none';
+      });
+    });
+    // Trigger on load
+    var modal = select.closest('.modal');
+    var show = select.value === 'buyer';
+    modal.querySelectorAll('.edit-buyer-extra').forEach(function(el) {
+      el.style.display = show ? '' : 'none';
+    });
+  });
+});
+</script> 

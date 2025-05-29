@@ -7,6 +7,9 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
     return;
 }
 
+// Fetch all stalls for dropdown
+$stalls = $pdo->query('SELECT id, name FROM stalls ORDER BY name ASC')->fetchAll();
+
 // Handle add announcement
 $add_success = $add_error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_announcement'])) {
@@ -42,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_announcement_id'
     $edit_message = trim($_POST['edit_message'] ?? '');
     $edit_type = $_POST['edit_type'] ?? 'info';
     $edit_image_url = $_POST['current_image'] ?? null;
+    $edit_stall_id = isset($_POST['edit_stall_id']) ? intval($_POST['edit_stall_id']) : null;
     if (isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK) {
         list($ok, $result) = secure_image_upload($_FILES['edit_image']);
         if ($ok) {
@@ -53,10 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_announcement_id'
     if (!$edit_title || !$edit_message) {
         $edit_error = 'Title and message are required.';
     } else {
-        $stmt = $pdo->prepare('UPDATE announcements SET title=?, message=?, type=?, image=? WHERE id=?');
-        if ($stmt->execute([$edit_title, $edit_message, $edit_type, $edit_image_url, $edit_id])) {
-            header('Location: ' . $_SERVER['REQUEST_URI']);
-            exit;
+        if ($edit_stall_id) {
+            $stmt = $pdo->prepare('UPDATE announcements SET title=?, message=?, type=?, image=?, stall_id=? WHERE id=?');
+            $params = [$edit_title, $edit_message, $edit_type, $edit_image_url, $edit_stall_id, $edit_id];
+        } else {
+            $stmt = $pdo->prepare('UPDATE announcements SET title=?, message=?, type=?, image=? WHERE id=?');
+            $params = [$edit_title, $edit_message, $edit_type, $edit_image_url, $edit_id];
+        }
+        if ($stmt->execute($params)) {
+            $edit_success = 'Announcement updated!';
         } else {
             $edit_error = 'Failed to update announcement.';
         }
@@ -154,6 +163,15 @@ $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DE
                         <?php endif; ?>
                         <input type="file" class="form-control" name="edit_image" accept="image/*">
                         <input type="hidden" name="current_image" value="<?= htmlspecialchars($a['image']) ?>">
+                      </div>
+                      <div class="mb-3" style="<?= empty($a['seller_id']) ? 'display:none;' : '' ?>">
+                        <label class="form-label">Stall</label>
+                        <select class="form-select" name="edit_stall_id">
+                          <option value="">Select stall</option>
+                          <?php foreach ($stalls as $stall): ?>
+                            <option value="<?= $stall['id'] ?>" <?= (isset($a['stall_id']) && $a['stall_id'] == $stall['id']) ? 'selected' : '' ?>><?= htmlspecialchars($stall['name']) ?></option>
+                          <?php endforeach; ?>
+                        </select>
                       </div>
                       <button type="submit" class="btn btn-primary">Save Changes</button>
                     </form>
