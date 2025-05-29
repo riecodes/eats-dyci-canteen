@@ -4,6 +4,10 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'seller')
     return;
 }
 require_once __DIR__ . '/../includes/db.php';
+<<<<<<< HEAD
+=======
+require_once '../includes/upload.php';
+>>>>>>> master
 
 $seller_id = $_SESSION['user_id'];
 // Get all stalls owned by this seller
@@ -28,12 +32,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $category_id = $_POST['category_id'] ?? null;
     $stall_id = $_POST['stall_id'] ?? null;
     $image_url = null;
+<<<<<<< HEAD
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
         $target = '../assets/imgs/products_' . uniqid() . '.' . $ext;
         if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
             $image_url = $target;
+=======
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        list($ok, $result) = secure_image_upload($_FILES['image']);
+        if ($ok) {
+            $image_url = $result;
+        } else {
+            $add_error = $result;
+>>>>>>> master
         }
     }
     if (!$name || !$price || !$stall_id) {
@@ -66,10 +79,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
     $edit_category_id = $_POST['edit_category_id'] ?? null;
     $edit_image_url = null;
     if (isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK) {
+<<<<<<< HEAD
         $ext = pathinfo($_FILES['edit_image']['name'], PATHINFO_EXTENSION);
         $target = '../assets/imgs/products_' . uniqid() . '.' . $ext;
         if (move_uploaded_file($_FILES['edit_image']['tmp_name'], $target)) {
             $edit_image_url = $target;
+=======
+        list($ok, $result) = secure_image_upload($_FILES['edit_image']);
+        if ($ok) {
+            $edit_image_url = $result;
+        } else {
+            $edit_error = $result;
+>>>>>>> master
         }
     }
     if (!$edit_name || !$edit_price) {

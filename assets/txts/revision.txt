@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
 
 ## 1. Project Setup
 - [x] Organize folders: public/, assets/, database/, includes/, pages/ (admin/, seller/, buyer/ folders not found, but pages/ used)
 - [x] Use Bootstrap for responsive UI (Bootstrap included in index.php, login.php, register.php)
 - [x] Integrate Google Font (Inter included)
+=======
+CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST (Updated)
+
+## 1. Project Setup
+- [x] Organize folders: public/, assets/, database/, includes/, pages/
+- [x] Use Bootstrap for responsive UI
+- [x] Integrate Google Font (Inter)
+>>>>>>> master
 - [x] Set up MySQL connection config (config.php, db.php)
 
 ## 2. Database
@@ -12,6 +21,7 @@ CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
 - [ ] Add SQL scripts for backup/restore (not found)
 
 ## 3. Authentication & User Roles
+<<<<<<< HEAD
 - [x] Implement registration (buyer only) and login (all roles) in PHP (register.php, login.php)
 - [x] Enforce role-based access (session checks in pages)
 - [x] Admin can create/manage sellers and buyers (admin_users.php)
@@ -19,10 +29,20 @@ CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
 ## 4. Admin Features
 - [x] User management: add/edit/delete users, assign roles (admin_users.php)
 - [x] Stall management: add/edit/delete stalls, assign sellers (admin_stalls.php)
+=======
+- [x] Implement registration (buyer only) and login (all roles)
+- [x] Enforce role-based access (session checks in pages)
+- [x] Admin can create/manage sellers and buyers
+
+## 4. Admin Features
+- [x] User management: add/edit/delete users, assign roles
+- [x] Stall management: add/edit/delete stalls, assign sellers, assign to canteen locations
+>>>>>>> master
 - [ ] Database backup/restore UI (not found)
 - [ ] Basic analytics/reporting (dashboard.php has placeholders only)
 
 ## 5. Seller Features
+<<<<<<< HEAD
 - [ ] Product management: CRUD for products, image upload (not found)
 - [ ] Order management: view/process/update order status (not found)
 - [ ] Payment verification: show static QR code, receive buyer-uploaded QR receipt, approve/decline orders (QR code image exists, logic not found)
@@ -48,12 +68,48 @@ CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
 - [ ] Admin/seller can create announcements (with images) (not found)
 - [ ] Buyers can view/mark as read (not found)
 - [ ] Store images and track views (not found)
+=======
+- [x] Product management: CRUD for products, image upload
+- [x] Category management: CRUD for categories
+- [x] Order management: view/process/update order status (queue, processing, done, complete)
+- [x] Payment verification: show static QR code, receive buyer-uploaded QR receipt, approve/decline orders
+- [ ] Order voiding: auto-cancel unclaimed orders after time limit (not implemented)
+- [ ] Stock management: input and monitor product stocks (not implemented)
+- [ ] Low/no stock notifications (not implemented)
+- [ ] Analytics dashboard: sales and product performance insights (not implemented)
+
+## 6. Buyer Features
+- [x] Self-registration
+- [ ] Browse canteens, stalls, products (not implemented)
+- [ ] Place orders (max 5 items/order) (not implemented)
+- [ ] Canteen > stall > items selection flow (not implemented)
+- [ ] Choose payment method, view static QR code, upload payment receipt (partial: receipt upload only)
+- [x] Submit receipt to seller for verification (implemented)
+- [x] Track order status (via buyer_orders.php)
+- [ ] Leave reviews (not implemented)
+- [ ] Provide identification (student/teacher/staff/outsider) during order (not implemented)
+
+## 7. Order & Payment Flow
+- [ ] Implement order placement, payment, and status update logic (partial)
+- [x] Display static QR code, handle receipt upload and approval (implemented)
+- [x] Seller approves/declines order based on uploaded receipt (implemented)
+- [ ] Auto-void orders after time limit (not implemented)
+
+## 8. Announcement System
+- [ ] Admin/seller can create announcements (with images) (not implemented)
+- [ ] Buyers can view/mark as read (not implemented)
+- [ ] Store images and track views (not implemented)
+>>>>>>> master
 
 ## 9. Security
 - [x] Sanitize all inputs (partially, needs review)
 - [x] Hash passwords (password_hash used)
 - [x] Enforce access control on all endpoints (session checks in pages)
+<<<<<<< HEAD
 - [ ] Secure file uploads (not found)
+=======
+- [ ] Secure file uploads (not fully implemented)
+>>>>>>> master
 
 ## 10. Other
 - [x] Document all changes/fixes in memory.txt
@@ -63,7 +119,11 @@ CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
 ## UI/UX
 - [x] Use Bootstrap and Google Font for a clean, modern look
 - [x] No admin template; use Bootstrap defaults
+<<<<<<< HEAD
 - [x] QR code payment: show static QR code (qrcode-placeholder.jpg exists), buyer uploads receipt, seller verifies (logic not found)
+=======
+- [x] QR code payment: show static QR code (qrcode-placeholder.jpg exists), buyer uploads receipt, seller verifies
+>>>>>>> master
 
 ## ARCHITECTURE
 - [x] Only one index.php file in public/ (serves as main entry point)
@@ -81,4 +141,20 @@ CANTEEN MANAGEMENT SYSTEM REQUIREMENTS & PROGRESS CHECKLIST
 **Legend:**
 - [x] = Complete/In Progress
 - [ ] = Not Started/Not Found
+<<<<<<< HEAD
 - (needs review) = May be partial or needs further checking 
+=======
+- (needs review) = May be partial or needs further checking
+
+**Notes:**
+- Canteen > stall > items selection and buyer identification are now explicitly listed.
+- Stock management and notifications are now explicitly listed.
+- Order limit and voiding are now explicitly listed.
+- Analytics and announcement system are still missing.
+
+Recent Changes:
+- Implemented full buyer order flow: dynamic canteen > stall > product selection, session-based cart, order placement, and order limit logic.
+- Added buyer order tracking and receipt upload (buyer_orders.php).
+- Integrated seller-side order management: view orders, verify receipts, approve/decline, and mark as done (seller_orders.php).
+- All logic is pure PHP, single-page, no AJAX. 
+>>>>>>> master

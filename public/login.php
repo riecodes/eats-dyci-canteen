@@ -1,5 +1,9 @@
 <?php
+<<<<<<< HEAD
 session_start();
+=======
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+>>>>>>> master
 if (isset($_GET['logout'])) {
     session_destroy();
     header('Location: login.php');
@@ -53,8 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <div class="login-container">
+<<<<<<< HEAD
     <img src="../assets/imgs/dyci-logo.png" alt="DYCI Logo" class="login-logo">
     <div class="login-title">Welcome Back</div>
+=======
+    <div class="d-flex align-items-center justify-content-center">
+        <img src="../assets/imgs/dyci-logo.png" alt="DYCI Logo" class="login-logo">        
+    </div>
+    <div class="login-title">EatsDYCI</div>
+>>>>>>> master
     <?php if ($error): ?>
         <div class="alert alert-danger text-center"><?php echo $error; ?></div>
     <?php endif; ?>
@@ -67,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="password" class="form-label">Password</label>
             <input type="password" class="form-control" id="password" name="password" required>
         </div>
+<<<<<<< HEAD
         <div class="login-links">
             <div></div>
             <a href="#">Forgot Password?</a>
@@ -78,5 +90,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+=======
+        <div class="login-links align-items-center">
+            <div></div>
+            <span data-bs-toggle="tooltip" data-bs-placement="left" title="Forgot your password? Please contact an admin to reset your account.">
+                <i class="fa fa-info-circle text-info" style="cursor:pointer;"></i>
+            </span>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+    <div class="register-link mt-3">
+        <span data-bs-toggle="tooltip" data-bs-placement="right" title="Buyers can no longer self-register. Please contact an admin to create your account.">
+            <i class="fa fa-info-circle text-info" style="cursor:pointer;"></i>
+        </span>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+>>>>>>> master
 </body>
 </html> 

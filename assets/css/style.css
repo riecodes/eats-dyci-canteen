@@ -9,6 +9,13 @@ body {
     font-family: 'Inter', 'Roboto', 'Open Sans', Arial, sans-serif;
     background-color: #f8f9fa;
     color: #222;
+<<<<<<< HEAD
+=======
+    
+}
+html, body {
+    height: 100%;
+>>>>>>> master
 }
 
 /* DYCI Color Palette Variables */

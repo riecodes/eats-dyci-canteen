@@ -1,17 +1,31 @@
 <?php
+<<<<<<< HEAD
+=======
+require_once '../includes/config.php';
+require_once '../includes/db.php';
+require_once '../includes/upload.php';
+>>>>>>> master
 if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'seller') {
     echo '<div class="alert alert-danger">Access denied.</div>';
     return;
 }
+<<<<<<< HEAD
 require_once __DIR__ . '/../includes/db.php';
 
 $seller_id = $_SESSION['user_id'];
+=======
+$seller_id = $_SESSION['user_id'];
+
+>>>>>>> master
 // Get all stalls owned by this seller
 $stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE owner_id = ?");
 $stall_stmt->execute([$seller_id]);
 $stalls = $stall_stmt->fetchAll();
 $stall_ids = array_column($stalls, 'id');
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 if (empty($stall_ids)) {
     echo '<div class="alert alert-warning">You do not own any stalls. Please contact admin.</div>';
     return;
@@ -22,9 +36,15 @@ $qr_success = $qr_error = '';
 // Assume one QR code per seller, store path in a new table or in users table (for now, use users.qr_code)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_qr'])) {
     if (isset($_FILES['qr_code']) && $_FILES['qr_code']['error'] === UPLOAD_ERR_OK) {
+<<<<<<< HEAD
         $ext = pathinfo($_FILES['qr_code']['name'], PATHINFO_EXTENSION);
         $target = '../assets/imgs/qr_seller_' . $seller_id . '.' . $ext;
         if (move_uploaded_file($_FILES['qr_code']['tmp_name'], $target)) {
+=======
+        list($ok, $result) = secure_image_upload($_FILES['qr_code']);
+        if ($ok) {
+            $target = $result;
+>>>>>>> master
             // Save path to users table
             $stmt = $pdo->prepare("UPDATE users SET qr_code=? WHERE id=?");
             if ($stmt->execute([$target, $seller_id])) {
@@ -33,7 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_qr'])) {
                 $qr_error = 'Failed to save QR code.';
             }
         } else {
+<<<<<<< HEAD
             $qr_error = 'Failed to upload QR code.';
+=======
+            $qr_error = $result;
+>>>>>>> master
         }
     } else {
         $qr_error = 'No file uploaded.';
@@ -49,7 +73,11 @@ if (!$seller_qr || !file_exists($seller_qr)) {
 
 // Handle status update/approval/decline
 $status_success = $status_error = '';
+<<<<<<< HEAD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_POST['action']) && !isset($_POST['upload_qr'])) {
+=======
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_POST['action'])) {
+>>>>>>> master
     $order_ref = $_POST['order_ref'];
     $action = $_POST['action'];
     if ($action === 'processing') {
@@ -115,6 +143,7 @@ if ($orders) {
     </div>
     <?php if ($status_success): ?><div class="alert alert-success"><?= $status_success ?></div><?php endif; ?>
     <?php if ($status_error): ?><div class="alert alert-danger"><?= $status_error ?></div><?php endif; ?>
+<<<<<<< HEAD
     <table class="table table-bordered table-hover">
         <thead class="table-light">
             <tr>
@@ -175,4 +204,67 @@ if ($orders) {
         <?php endforeach; ?>
         </tbody>
     </table>
+=======
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Order Ref</th>
+                    <th>Date</th>
+                    <th>Buyer</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Receipt</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orders as $order): ?>
+                <tr>
+                    <td><?= htmlspecialchars($order['orderRef']) ?></td>
+                    <td><?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></td>
+                    <td><?= htmlspecialchars($buyers[$order['user_id']]['name'] ?? 'Unknown') ?><br><small><?= htmlspecialchars($buyers[$order['user_id']]['email'] ?? '') ?></small></td>
+                    <td><span class="badge bg-<?= $order['status'] === 'done' ? 'success' : ($order['status'] === 'processing' ? 'primary' : ($order['status'] === 'queue' ? 'warning text-dark' : 'secondary')) ?>"><?= htmlspecialchars($order['status']) ?></span></td>
+                    <td>
+                        <ul class="mb-0 ps-3">
+                        <?php if (!empty($order_items[$order['orderRef']])): ?>
+                            <?php foreach ($order_items[$order['orderRef']] as $item): ?>
+                                <li><?= htmlspecialchars($item['food_name']) ?> x <?= $item['quantity'] ?></li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li><em>No items</em></li>
+                        <?php endif; ?>
+                        </ul>
+                    </td>
+                    <td>₱<?= number_format($order['total_price'],2) ?></td>
+                    <td>
+                        <?php if ($order['receipt_image']): ?>
+                            <img src="<?= htmlspecialchars($order['receipt_image']) ?>" alt="Receipt" style="max-width:80px;max-height:80px;display:block;margin-bottom:5px;">
+                        <?php else: ?>
+                            <span class="text-muted small">No receipt</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ($order['status'] === 'queue' && $order['receipt_image']): ?>
+                            <form method="post" class="d-flex flex-column gap-1">
+                                <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
+                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-success">Approve</button>
+                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-danger">Decline</button>
+                            </form>
+                        <?php elseif ($order['status'] === 'processing'): ?>
+                            <form method="post">
+                                <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
+                                <button type="submit" name="action" value="done" class="btn btn-sm btn-primary">Mark as Done</button>
+                            </form>
+                        <?php else: ?>
+                            <span class="text-muted small">-</span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+>>>>>>> master
 </div> 

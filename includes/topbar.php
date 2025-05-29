@@ -11,7 +11,11 @@
     </div>
     <div class="d-flex align-items-center">
         <span class="topbar-user">
+<<<<<<< HEAD
             <?php echo htmlspecialchars($_SESSION['user_name'] ?? ''); ?> (<?php echo htmlspecialchars($_SESSION['user_role'] ?? ''); ?>)
+=======
+            <?php echo htmlspecialchars($_SESSION['user_name'] ?? ''); ?>
+>>>>>>> master
         </span>
         <a href="login.php?logout=1" class="topbar-logout">Logout</a>
     </div>
