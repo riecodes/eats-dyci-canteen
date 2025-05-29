@@ -138,16 +138,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     }
                     $cart_products[$product_id] = $prod;
                 }
+                // 3. Validate receipt image (portrait, file type)
+                $receipt_path = null;
                 if ($valid) {
-                    // 3. Insert order
+                    if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
+                        $img_info = getimagesize($_FILES['receipt_image']['tmp_name']);
+                        if ($img_info && $img_info[1] > $img_info[0]) { // portrait
+                            $ext = pathinfo($_FILES['receipt_image']['name'], PATHINFO_EXTENSION);
+                            $target = '../assets/imgs/receipt_' . uniqid() . '.' . $ext;
+                            if (move_uploaded_file($_FILES['receipt_image']['tmp_name'], $target)) {
+                                $receipt_path = $target;
+                            } else {
+                                $order_error = 'Failed to upload receipt image.';
+                                $valid = false;
+                            }
+                        } else {
+                            $order_error = 'Receipt image must be portrait.';
+                            $valid = false;
+                        }
+                    } else {
+                        $order_error = 'Receipt image is required.';
+                        $valid = false;
+                    }
+                }
+                // 4. Insert order
+                if ($valid) {
                     $orderRef = uniqid('ORD');
                     $total_price = 0;
                     foreach ($cart as $product_id => $qty) {
                         $total_price += $cart_products[$product_id]['price'] * $qty;
                     }
-                    $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price) VALUES (?, ?, ?)');
-                    if ($stmt->execute([$orderRef, $user_id, $total_price])) {
-                        // 4. Insert order items and update stock
+                    $note = trim($_POST['order_note'] ?? '');
+                    $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price, receipt_image, note, status) VALUES (?, ?, ?, ?, ?, ?)');
+                    if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'processing'])) {
+                        // 5. Insert order items and update stock
                         foreach ($cart as $product_id => $qty) {
                             $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
                             $stmt->execute([$orderRef, $product_id, $qty]);
@@ -155,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
                             $stmt->execute([$qty, $product_id]);
                         }
-                        // 5. Clear cart
+                        // 6. Clear cart
                         $_SESSION['cart'] = [];
                         $order_success = 'Order placed successfully!';
                     } else {
@@ -320,136 +344,4 @@ if(receiptInput && confirmBtn) {
         }
     }
 }
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Place Order - Eats DYCI Canteen</title>
-    <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-
-<div class="container mt-4">
-    <h2 class="mb-4">Place an Order</h2>
-    <?php if (!empty($cart_success)): ?><div class="alert alert-success"><?= $cart_success ?></div><?php endif; ?>
-    <?php if (!empty($cart_error)): ?><div class="alert alert-danger"><?= $cart_error ?></div><?php endif; ?>
-    <form method="get" action="index.php">
-        <input type="hidden" name="page" value="buyer_order">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <label for="canteenSelect" class="form-label">Select Canteen</label>
-                    <select id="canteenSelect" name="canteen_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">-- Select Canteen --</option>
-                        <?php foreach ($canteens as $canteen): ?>
-                            <option value="<?= $canteen['id'] ?>" <?= $selected_canteen == $canteen['id'] ? 'selected' : '' ?>><?= htmlspecialchars($canteen['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="stallSelect" class="form-label">Select Stall</label>
-                    <select id="stallSelect" name="stall_id" class="form-select" onchange="this.form.submit()" <?= $selected_canteen ? '' : 'disabled' ?>>
-                        <option value="">-- Select Stall --</option>
-                        <?php foreach ($stalls as $stall): ?>
-                            <option value="<?= $stall['id'] ?>" <?= $selected_stall == $stall['id'] ? 'selected' : '' ?>><?= htmlspecialchars($stall['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-8">
-                <div id="productsSection">
-                    <h5>Products</h5>
-                    <div id="productsList" class="row g-3">
-                        <?php if ($selected_stall && $products): ?>
-                            <?php foreach ($products as $product): ?>
-                                <div class="col-md-6 col-lg-4">
-                                    <div class="card h-100">
-                                        <img src="<?= htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg') ?>" class="card-img-top" alt="Product Image" style="max-height:150px;object-fit:cover;">
-                                        <div class="card-body">
-                                            <h6 class="card-title mb-1"><?= htmlspecialchars($product['name']) ?></h6>
-                                            <div class="mb-1 text-muted">₱<?= number_format($product['price'],2) ?></div>
-                                            <div class="mb-2 small">Stock: <?= (int)$product['stock'] ?></div>
-                                            <form method="post" class="d-flex align-items-center gap-2">
-                                                <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                                                <input type="number" class="form-control form-control-sm" name="quantity" min="1" max="<?= (int)$product['stock'] ?>" value="1" style="width:70px;">
-                                                <button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" <?= $product['stock'] < 1 ? 'disabled' : '' ?>>Add</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php elseif ($selected_stall): ?>
-                            <div class="col-12"><div class="alert alert-info">No products found for this stall.</div></div>
-                        <?php else: ?>
-                            <div class="col-12"><div class="alert alert-secondary">Select a canteen and stall to view products.</div></div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </form>
-    <hr>
-    <div class="row">
-        <div class="col-md-8 offset-md-4">
-            <h5>Your Cart</h5>
-            <div id="cartItems">
-                <?php if (!empty($order_success)): ?><div class="alert alert-success"><?= $order_success ?></div><?php endif; ?>
-                <?php if (!empty($order_error)): ?><div class="alert alert-danger"><?= $order_error ?></div><?php endif; ?>
-                <?php if (!empty($cart)): ?>
-                    <form method="post">
-                        <table class="table table-bordered align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Subtotal</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $total = 0;
-                                foreach ($cart as $product_id => $qty):
-                                    $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
-                                    $stmt->execute([$product_id]);
-                                    $prod = $stmt->fetch();
-                                    if (!$prod) continue;
-                                    $subtotal = $prod['price'] * $qty;
-                                    $total += $subtotal;
-                                ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($prod['name']) ?></td>
-                                    <td>₱<?= number_format($prod['price'],2) ?></td>
-                                    <td><input type="number" name="quantities[<?= $product_id ?>]" value="<?= $qty ?>" min="1" max="<?= (int)$prod['stock'] ?>" class="form-control form-control-sm" style="width:70px;"></td>
-                                    <td>₱<?= number_format($subtotal,2) ?></td>
-                                    <td>
-                                        <button type="submit" name="remove_from_cart" value="1" class="btn btn-danger btn-sm" formaction="" formmethod="post" onclick="this.form.product_id.value=<?= $product_id ?>;">Remove</button>
-                                        <input type="hidden" name="product_id" value="<?= $product_id ?>">
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <th colspan="3" class="text-end">Total</th>
-                                    <th colspan="2">₱<?= number_format($total,2) ?></th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                        <button type="submit" name="update_cart" class="btn btn-secondary">Update Cart</button>
-                        <button type="submit" name="place_order" class="btn btn-primary">Place Order</button>
-                    </form>
-                <?php else: ?>
-                    <div class="alert alert-secondary">Your cart is empty.</div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-</div>
-<script src="../assets/js/bootstrap.bundle.min.js"></script>
-</body>
-</html> 
+?> 
