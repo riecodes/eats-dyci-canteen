@@ -42,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     } else {
         $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id, $stock])) {
-            $add_success = 'Product added successfully!';
+            // POST-Redirect-GET
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $add_error = 'Failed to add product.';
         }
@@ -53,7 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product_id']))
     $del_id = intval($_POST['delete_product_id']);
     $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND stall_id IN (" . implode(',', $stall_ids) . ")");
     if ($stmt->execute([$del_id])) {
-        $delete_success = 'Product deleted.';
+        // POST-Redirect-GET
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
     } else {
         $delete_error = 'Failed to delete product.';
     }
@@ -78,7 +82,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
     $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_image_url, $edit_stock, $edit_id];
     $stmt = $pdo->prepare($sql);
     if ($stmt->execute($params)) {
-        $edit_success = 'Product updated.';
+        // POST-Redirect-GET
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
     } else {
         $edit_error = 'Failed to update product.';
     }

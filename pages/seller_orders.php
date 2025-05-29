@@ -28,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_qr'])) {
             $stmt = $pdo->prepare("UPDATE users SET qr_code=? WHERE id=?");
             if ($stmt->execute([$target, $seller_id])) {
                 $qr_success = 'QR code uploaded.';
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 $qr_error = 'Failed to save QR code.';
             }
@@ -53,16 +55,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_POST['
     $action = $_POST['action'];
     if ($action === 'processing') {
         $stmt = $pdo->prepare("UPDATE orders SET status='processing' WHERE orderRef=?");
-        if ($stmt->execute([$order_ref])) $status_success = 'Order marked as processing.';
-        else $status_error = 'Failed to update order.';
+        if ($stmt->execute([$order_ref])) {
+            $status_success = 'Order marked as processing.';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+            $status_error = 'Failed to update order.';
+        }
     } elseif ($action === 'done') {
         $stmt = $pdo->prepare("UPDATE orders SET status='done' WHERE orderRef=?");
-        if ($stmt->execute([$order_ref])) $status_success = 'Order marked as done.';
-        else $status_error = 'Failed to update order.';
+        if ($stmt->execute([$order_ref])) {
+            $status_success = 'Order marked as done.';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+            $status_error = 'Failed to update order.';
+        }
     } elseif ($action === 'cancelled') {
         $stmt = $pdo->prepare("UPDATE orders SET status='cancelled' WHERE orderRef=?");
-        if ($stmt->execute([$order_ref])) $status_success = 'Order cancelled.';
-        else $status_error = 'Failed to update order.';
+        if ($stmt->execute([$order_ref])) {
+            $status_success = 'Order cancelled.';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
+        } else {
+            $status_error = 'Failed to update order.';
+        }
     }
 }
 

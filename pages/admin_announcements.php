@@ -30,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_announcement'])) 
     } else {
         $stmt = $pdo->prepare('INSERT INTO announcements (title, message, type, image) VALUES (?, ?, ?, ?)');
         if ($stmt->execute([$title, $message, $type, $image_url])) {
-            $add_success = 'Announcement added!';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $add_error = 'Failed to add announcement.';
         }
@@ -76,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement_i
     $del_id = intval($_POST['delete_announcement_id']);
     $stmt = $pdo->prepare('DELETE FROM announcements WHERE id=?');
     if ($stmt->execute([$del_id])) {
-        $delete_success = 'Announcement deleted!';
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
     } else {
         $delete_error = 'Failed to delete announcement.';
     }

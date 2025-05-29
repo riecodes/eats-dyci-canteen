@@ -18,6 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_FILES[
             $stmt = $pdo->prepare("UPDATE orders SET receipt_image=? WHERE orderRef=? AND user_id=?");
             if ($stmt->execute([$target, $order_ref, $buyer_id])) {
                 $upload_success = 'Receipt uploaded.';
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 $upload_error = 'Failed to save receipt.';
             }

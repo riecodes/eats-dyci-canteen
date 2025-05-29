@@ -31,8 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_canteen'])) {
         if (!$add_error) {
             $stmt = $pdo->prepare('INSERT INTO canteens (name, image) VALUES (?, ?)');
             if ($stmt->execute([$name, $image_url])) {
-                $add_success = 'Canteen added!';
-                $canteens = $pdo->query('SELECT * FROM canteens ORDER BY id ASC')->fetchAll();
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 $add_error = 'Failed to add canteen.';
             }
@@ -58,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_canteen_id'])) {
         if (!$edit_error) {
             $stmt = $pdo->prepare('UPDATE canteens SET name=?, image=? WHERE id=?');
             if ($stmt->execute([$edit_name, $edit_image_url, $edit_id])) {
-                $edit_success = 'Canteen updated!';
-                $canteens = $pdo->query('SELECT * FROM canteens ORDER BY id ASC')->fetchAll();
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 $edit_error = 'Failed to update canteen.';
             }
@@ -71,8 +71,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_canteen_id']))
     $del_id = intval($_POST['delete_canteen_id']);
     $stmt = $pdo->prepare('DELETE FROM canteens WHERE id=?');
     if ($stmt->execute([$del_id])) {
-        $delete_success = 'Canteen deleted!';
-        $canteens = $pdo->query('SELECT * FROM canteens ORDER BY id ASC')->fetchAll();
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
     } else {
         $delete_error = 'Failed to delete canteen.';
     }

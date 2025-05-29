@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
             if ($ok) {
                 $success = 'Account updated!';
                 $_SESSION['user_name'] = $name;
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 $error = 'Failed to update account.';
             }

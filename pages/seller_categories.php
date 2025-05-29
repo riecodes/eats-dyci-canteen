@@ -30,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
     } else {
         $stmt = $pdo->prepare("INSERT INTO categories (name, description, stall_id) VALUES (?, ?, ?)");
         if ($stmt->execute([$name, $description, $stall_id])) {
-            $add_success = 'Category added successfully!';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $add_error = 'Failed to add category.';
         }
@@ -41,9 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_category_id'])
     $del_id = $_POST['delete_category_id'];
     $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ? AND stall_id IN (" . implode(',', $stall_ids) . ")");
     if ($stmt->execute([$del_id])) {
-        $delete_success = 'Category deleted.';
-    } else {
-        $delete_error = 'Failed to delete category.';
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
     }
 }
 // Edit category
@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category_id'])) 
     } else {
         $stmt = $pdo->prepare("UPDATE categories SET name=?, description=? WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")");
         if ($stmt->execute([$edit_name, $edit_description, $edit_id])) {
-            $edit_success = 'Category updated.';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $edit_error = 'Failed to update category.';
         }
