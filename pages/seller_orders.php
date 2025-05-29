@@ -6,7 +6,10 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'seller')
 require_once __DIR__ . '/../includes/db.php';
 
 $seller_id = $_SESSION['user_id'];
-$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE user_id = ?");
+$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE seller_id = ?");
+$stall_stmt->execute([$seller_id]);
+$stalls = $stall_stmt->fetchAll();
+$stall_ids = array_column($stalls, 'id');
 
 if (empty($stall_ids)) {
     echo '<div class="alert alert-warning">You do not own any stalls. Please contact admin.</div>';

@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_stall'])) {
     } elseif ($user_id && !in_array($user_id, array_column($sellers, 'id'))) {
         $add_error = 'Invalid seller selected.';
     } else {
-        $stmt = $pdo->prepare('INSERT INTO stalls (name, description, user_id, canteen_id) VALUES (?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO stalls (name, description, seller_id, canteen_id) VALUES (?, ?, ?, ?)');
         if ($stmt->execute([$name, $description, $user_id ?: null, $canteen_id])) {
             $add_success = 'Stall added successfully!';
         } else {
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_stall_id'])) {
     } elseif ($edit_user_id && !in_array($edit_user_id, array_column($sellers, 'id'))) {
         $edit_error = 'Invalid seller selected.';
     } else {
-        $stmt = $pdo->prepare('UPDATE stalls SET name = ?, description = ?, user_id = ?, canteen_id = ? WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE stalls SET name = ?, description = ?, seller_id = ?, canteen_id = ? WHERE id = ?');
         if ($stmt->execute([$edit_name, $edit_description, $edit_user_id ?: null, $edit_canteen_id, $edit_id])) {
             $edit_success = 'Stall updated successfully!';
         } else {
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_stall_id'])) {
     }
 }
 // Fetch all stalls with owner name and canteen name
-$stmt = $pdo->query('SELECT stalls.id, stalls.name, stalls.description, users.name AS owner_name, stalls.user_id, stalls.canteen_id, canteens.name AS canteen_name FROM stalls LEFT JOIN users ON stalls.user_id = users.id LEFT JOIN canteens ON stalls.canteen_id = canteens.id ORDER BY stalls.id ASC');
+$stmt = $pdo->query('SELECT stalls.id, stalls.name, stalls.description, users.name AS seller_name, stalls.seller_id, stalls.canteen_id, canteens.name AS canteen_name FROM stalls LEFT JOIN users ON stalls.seller_id = users.id LEFT JOIN canteens ON stalls.canteen_id = canteens.id ORDER BY stalls.id ASC');
 $stalls = $stmt->fetchAll();
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
@@ -99,7 +99,7 @@ $stalls = $stmt->fetchAll();
           <td><?php echo htmlspecialchars($stall['name']); ?></td>
           <td><?php echo htmlspecialchars($stall['description']); ?></td>
           <td><?php echo htmlspecialchars($stall['canteen_name'] ?? ''); ?></td>
-          <td><?php echo htmlspecialchars($stall['owner_name'] ?? 'Unassigned'); ?></td>
+          <td><?php echo htmlspecialchars($stall['seller_name'] ?? 'Unassigned'); ?></td>
           <td>
             <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editStallModal<?php echo $stall['id']; ?>">Edit</button>
             <form method="post" style="display:inline">
@@ -139,7 +139,7 @@ $stalls = $stmt->fetchAll();
                         <select class="form-select" name="edit_user_id">
                           <option value="">Unassigned</option>
                           <?php foreach ($sellers as $seller): ?>
-                            <option value="<?php echo $seller['id']; ?>" <?php if ($stall['user_id'] == $seller['id']) echo 'selected'; ?>><?php echo htmlspecialchars($seller['name']); ?></option>
+                            <option value="<?php echo $seller['id']; ?>" <?php if ($stall['seller_id'] == $seller['id']) echo 'selected'; ?>><?php echo htmlspecialchars($seller['name']); ?></option>
                           <?php endforeach; ?>
                         </select>
                       </div>

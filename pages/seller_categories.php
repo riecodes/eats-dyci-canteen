@@ -7,7 +7,7 @@ require_once __DIR__ . '/../includes/db.php';
 
 $seller_id = $_SESSION['user_id'];
 // Get all stalls owned by this seller
-$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE user_id = ?");
+$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE seller_id = ?");
 $stall_stmt->execute([$seller_id]);
 $stalls = $stall_stmt->fetchAll();
 $stall_ids = array_column($stalls, 'id');
@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category_id'])) 
         }
     }
 }
-// Get all categories for the seller's stalls
-$cat_stmt = $pdo->prepare("SELECT * FROM categories WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
+// Get all categories globally
+$cat_stmt = $pdo->prepare("SELECT * FROM categories");
 $cat_stmt->execute();
 $categories = $cat_stmt->fetchAll();
 ?>
@@ -82,7 +82,6 @@ $categories = $cat_stmt->fetchAll();
                 <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Stall</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -92,14 +91,6 @@ $categories = $cat_stmt->fetchAll();
                 <td><?= $cat['id'] ?></td>
                 <td><?= htmlspecialchars($cat['name']) ?></td>
                 <td><?= htmlspecialchars($cat['description']) ?></td>
-                <td><?php
-                    foreach ($stalls as $stall) {
-                        if ($stall['id'] == $cat['stall_id']) {
-                            echo htmlspecialchars($stall['name']);
-                            break;
-                        }
-                    }
-                ?></td>
                 <td>
                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCategoryModal<?= $cat['id'] ?>">Edit</button>
                     <form method="post" style="display:inline">
@@ -154,14 +145,6 @@ $categories = $cat_stmt->fetchAll();
                 <div class="mb-3">
                     <label class="form-label">Description</label>
                     <textarea class="form-control" name="description" rows="2"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Stall</label>
-                    <select class="form-select" name="stall_id" required>
-                        <?php foreach ($stalls as $stall): ?>
-                            <option value="<?= $stall['id'] ?>"><?= htmlspecialchars($stall['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
                 </div>
                 <button type="submit" class="btn btn-success w-100">Add Category</button>
             </form>

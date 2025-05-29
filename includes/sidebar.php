@@ -16,6 +16,8 @@
             <li><a href="index.php?page=admin_users" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_users' ? 'active' : ''; ?>"><i class="fas fa-users me-2" style="color:#170e63;"></i>Users</a></li>
             <li><a href="index.php?page=admin_canteens" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_canteens' ? 'active' : ''; ?>"><i class="fas fa-school me-2" style="color:#170e63;"></i>Canteens</a></li>
             <li><a href="index.php?page=admin_stalls" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_stalls' ? 'active' : ''; ?>"><i class="fas fa-store-alt me-2" style="color:#170e63;"></i>Stalls</a></li>
+            <li><a href="index.php?page=admin_products" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_products' ? 'active' : ''; ?>"><i class="fas fa-box-open me-2" style="color:#170e63;"></i>Product
+        </a></li>
             <li><a href="index.php?page=admin_announcements" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_announcements' ? 'active' : ''; ?>"><i class="fas fa-bullhorn me-2" style="color:#170e63;"></i>Announcements</a></li>
             <li><a href="index.php?page=admin_account" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_account' ? 'active' : ''; ?>"><i class="fas fa-user-cog me-2" style="color:#170e63;"></i>My Account</a></li>
         <?php elseif ($role === 'seller'): ?>
