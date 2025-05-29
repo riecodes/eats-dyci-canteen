@@ -34,11 +34,13 @@ $stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id=? ORDER BY created_at 
 $stmt->execute([$buyer_id]);
 $orders = $stmt->fetchAll();
 ?>
-<div class="container-fluid">
-    <h2>My Orders</h2>
-    <?php if ($upload_success): ?><div class="alert alert-success"><?= $upload_success ?></div><?php endif; ?>
-    <?php if ($upload_error): ?><div class="alert alert-danger"><?= $upload_error ?></div><?php endif; ?>
-    <table class="table table-bordered table-hover">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<div class="container-fluid px-4 pt-4">
+    <div class="dashboard-section-title mb-3">My Orders</div>
+    <?php if ($upload_success): ?><div class="alert alert-success mb-2"><?= $upload_success ?></div><?php endif; ?>
+    <?php if ($upload_error): ?><div class="alert alert-danger mb-2"><?= $upload_error ?></div><?php endif; ?>
+    <div class="dashboard-table mb-4">
+    <table class="table mb-0">
         <thead class="table-light">
             <tr>
                 <th>Order Ref</th>
@@ -59,9 +61,10 @@ $orders = $stmt->fetchAll();
                     <?php if ($order['receipt_image']): ?>
                         <img src="<?= $order['receipt_image'] ?>" alt="Receipt" style="max-width:80px;max-height:80px;object-fit:cover;">
                     <?php elseif (in_array($order['status'], ['queue','pending'])): ?>
-                        <form method="post" enctype="multipart/form-data" style="display:inline">
+                        <form method="post" enctype="multipart/form-data" style="display:inline" onsubmit="return showReceiptPreview(event, 'receipt_preview_<?= $order['orderRef'] ?>')">
                             <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                            <input type="file" name="receipt_image" accept="image/*" required>
+                            <input type="file" name="receipt_image" accept="image/*" required onchange="previewReceiptImage(event, 'receipt_preview_<?= $order['orderRef'] ?>')">
+                            <img id="receipt_preview_<?= $order['orderRef'] ?>" src="#" alt="Preview" style="display:none;max-width:80px;max-height:80px;margin-top:8px;" />
                             <button type="submit" class="btn btn-sm btn-primary">Upload Receipt</button>
                         </form>
                     <?php else: ?>
@@ -72,4 +75,18 @@ $orders = $stmt->fetchAll();
         <?php endforeach; ?>
         </tbody>
     </table>
-</div> 
+    </div>
+</div>
+<script>
+function previewReceiptImage(event, id) {
+    const [file] = event.target.files;
+    const preview = document.getElementById(id);
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+    } else {
+        preview.src = '#';
+        preview.style.display = 'none';
+    }
+}
+</script> 
