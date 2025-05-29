@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $category_id = $_POST['category_id'] ?? null;
     $stall_id = $_POST['stall_id'] ?? null;
     $seller_id = $_POST['seller_id'] ?? null;
+    $stock = intval($_POST['stock'] ?? 0);
     $image_url = null;
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
@@ -33,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     if (!$name || !$price || !$stall_id || !$seller_id) {
         $add_error = 'Name, price, seller, and stall are required.';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id])) {
+        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id, $stock])) {
             $add_success = 'Product added successfully!';
         } else {
             $add_error = 'Failed to add product.';
@@ -60,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
     $edit_category_id = $_POST['edit_category_id'] ?? null;
     $edit_stall_id = $_POST['edit_stall_id'] ?? null;
     $edit_seller_id = $_POST['edit_seller_id'] ?? null;
+    $edit_stock = intval($_POST['edit_stock'] ?? 0);
     $edit_image_url = null;
     if (isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['edit_image']['name'], PATHINFO_EXTENSION);
@@ -68,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
             $edit_image_url = $target;
         }
     }
-    $sql = "UPDATE products SET name=?, description=?, price=?, category_id=?, stall_id=?, seller_id=?";
-    $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_stall_id, $edit_seller_id];
+    $sql = "UPDATE products SET name=?, description=?, price=?, category_id=?, stall_id=?, seller_id=?, stock=?";
+    $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_stall_id, $edit_seller_id, $edit_stock];
     if ($edit_image_url) {
         $sql .= ", image=?";
         $params[] = $edit_image_url;
@@ -111,6 +113,7 @@ $products = $prod_stmt->fetchAll();
                 <th>Category</th>
                 <th>Seller</th>
                 <th>Stall</th>
+                <th>Stock</th>
                 <th>Image</th>
                 <th>Actions</th>
             </tr>
@@ -125,6 +128,7 @@ $products = $prod_stmt->fetchAll();
                 <td><?= htmlspecialchars($prod['category_name']) ?></td>
                 <td><?= htmlspecialchars($prod['seller_name']) ?></td>
                 <td><?= htmlspecialchars($prod['stall_name']) ?></td>
+                <td><?= $prod['stock'] ?></td>
                 <td><?php if ($prod['image']): ?><img src="<?= $prod['image'] ?>" alt="" style="max-width:60px;max-height:60px;object-fit:cover;"/><?php endif; ?></td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $prod['id'] ?>">Edit</button>
@@ -179,6 +183,10 @@ $products = $prod_stmt->fetchAll();
                                             <option value="<?= $stall['id'] ?>" <?php if ($prod['stall_id'] == $stall['id']) echo 'selected'; ?>><?= htmlspecialchars($stall['name']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label" for="edit_stock_<?= $prod['id'] ?>">Stock</label>
+                                    <input type="number" class="form-control" id="edit_stock_<?= $prod['id'] ?>" name="edit_stock" min="0" value="<?= $prod['stock'] ?>" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label" for="edit_image_<?= $prod['id'] ?>">Image</label>
@@ -244,6 +252,10 @@ $products = $prod_stmt->fetchAll();
                             <option value="<?= $stall['id'] ?>"><?= htmlspecialchars($stall['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Stock</label>
+                    <input type="number" class="form-control" name="stock" min="0" value="0" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="add_product_image">Image</label>

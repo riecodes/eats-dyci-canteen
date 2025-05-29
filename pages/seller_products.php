@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $category_id = $_POST['category_id'] ?? null;
     $stall_id = $_POST['stall_id'] ?? null;
     $image_url = null;
+    $stock = intval($_POST['stock'] ?? 0);
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
@@ -39,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     if (!$name || !$price || !$stall_id) {
         $add_error = 'Name, price, and stall are required.';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id])) {
+        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id, $stock])) {
             $add_success = 'Product added successfully!';
         } else {
             $add_error = 'Failed to add product.';
@@ -65,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
     $edit_price = floatval($_POST['edit_price'] ?? 0);
     $edit_category_id = $_POST['edit_category_id'] ?? null;
     $edit_image_url = null;
+    $edit_stock = intval($_POST['edit_stock'] ?? 0);
     if (isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['edit_image']['name'], PATHINFO_EXTENSION);
         $target = '../assets/imgs/products_' . uniqid() . '.' . $ext;
@@ -72,8 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
             $edit_image_url = $target;
         }
     }
-    $sql = "UPDATE products SET name=?, description=?, price=?, category_id=?, image=? WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")";
-    $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_image_url, $edit_id];
+    $sql = "UPDATE products SET name=?, description=?, price=?, category_id=?, image=?, stock=? WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")";
+    $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_image_url, $edit_stock, $edit_id];
     $stmt = $pdo->prepare($sql);
     if ($stmt->execute($params)) {
         $edit_success = 'Product updated.';
@@ -113,6 +115,7 @@ $products = $prod_stmt->fetchAll();
                 <th>Description</th>
                 <th>Price</th>
                 <th>Category</th>
+                <th>Stock</th>
                 <th>Image</th>
                 <th>Actions</th>
             </tr>
@@ -125,6 +128,7 @@ $products = $prod_stmt->fetchAll();
                 <td><?= htmlspecialchars($prod['description']) ?></td>
                 <td>₱<?= number_format($prod['price'],2) ?></td>
                 <td><?= htmlspecialchars($prod['category_id']) ?></td>
+                <td><?= htmlspecialchars($prod['stock']) ?></td>
                 <td><?php if ($prod['image']): ?><img src="<?= $prod['image'] ?>" alt="" style="max-width:60px;max-height:60px;object-fit:cover;"/><?php endif; ?></td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $prod['id'] ?>">Edit</button>
@@ -168,6 +172,10 @@ $products = $prod_stmt->fetchAll();
                                     <label class="form-label" for="edit_image_<?= $prod['id'] ?>">Image</label>
                                     <input type="file" class="form-control" id="edit_image_<?= $prod['id'] ?>" name="edit_image">
                                     <?php if ($prod['image']): ?><img src="<?= $prod['image'] ?>" alt="" style="max-width:60px;max-height:60px;object-fit:cover;"/><?php endif; ?>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Stock</label>
+                                    <input type="number" class="form-control" name="edit_stock" min="0" value="<?= $prod['stock'] ?>" required>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Save Changes</button>
                             </form>
@@ -224,6 +232,10 @@ $products = $prod_stmt->fetchAll();
                 <div class="mb-3">
                     <label class="form-label" for="add_product_image">Image</label>
                     <input type="file" class="form-control" id="add_product_image" name="image">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Stock</label>
+                    <input type="number" class="form-control" name="stock" min="0" value="0" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Product</button>
             </form>
