@@ -49,23 +49,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
     }
 }
 ?>
-<div class="container mt-4">
-    <h2 class="mb-4">My Account</h2>
-    <?php if ($success): ?><div class="alert alert-success"><?= $success ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alert alert-danger"><?= $error ?></div><?php endif; ?>
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<div class="container-fluid px-4 pt-4">
+    <div class="dashboard-section-title mb-3">My Account</div>
+    <?php if ($success): ?><div class="alert alert-success mb-2"><?= $success ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert alert-danger mb-2"><?= $error ?></div><?php endif; ?>
     <form method="post" autocomplete="off">
         <input type="hidden" name="update_account" value="1">
         <div class="mb-3">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-control" name="name" value="<?= htmlspecialchars($seller['name']) ?>" required>
+            <label class="form-label" for="account_name">Full Name</label>
+            <input type="text" class="form-control" id="account_name" name="name" value="<?= htmlspecialchars($seller['name']) ?>" required>
         </div>
         <div class="mb-3">
-            <label class="form-label">Email address</label>
-            <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($seller['email']) ?>" required>
+            <label class="form-label" for="account_email">Email address</label>
+            <input type="email" class="form-control" id="account_email" name="email" value="<?= htmlspecialchars($seller['email']) ?>" required>
         </div>
         <div class="mb-3">
-            <label class="form-label">New Password (leave blank to keep current)</label>
-            <input type="password" class="form-control" name="password" autocomplete="new-password">
+            <label class="form-label" for="account_password">New Password (leave blank to keep current)</label>
+            <input type="password" class="form-control" id="account_password" name="password" autocomplete="new-password">
         </div>
         <button type="submit" class="btn btn-primary">Save Changes</button>
     </form>

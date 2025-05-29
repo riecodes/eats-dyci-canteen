@@ -67,16 +67,21 @@ $cat_stmt = $pdo->prepare("SELECT * FROM categories");
 $cat_stmt->execute();
 $categories = $cat_stmt->fetchAll();
 ?>
-<div class="container-fluid">
-    <h2>Category Management</h2>
-    <?php if ($add_success): ?><div class="alert alert-success"><?= $add_success ?></div><?php endif; ?>
-    <?php if ($add_error): ?><div class="alert alert-danger"><?= $add_error ?></div><?php endif; ?>
-    <?php if ($edit_success): ?><div class="alert alert-success"><?= $edit_success ?></div><?php endif; ?>
-    <?php if ($edit_error): ?><div class="alert alert-danger"><?= $edit_error ?></div><?php endif; ?>
-    <?php if ($delete_success): ?><div class="alert alert-success"><?= $delete_success ?></div><?php endif; ?>
-    <?php if ($delete_error): ?><div class="alert alert-danger"><?= $delete_error ?></div><?php endif; ?>
-    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Add Category</button>
-    <table class="table table-bordered table-hover">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<div class="container-fluid px-4 pt-4">
+    <div class="dashboard-section-title mb-3">Category Management</div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-bold">All Categories</div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">Add Category</button>
+    </div>
+    <?php if ($add_success): ?><div class="alert alert-success mb-2"><?= $add_success ?></div><?php endif; ?>
+    <?php if ($add_error): ?><div class="alert alert-danger mb-2"><?= $add_error ?></div><?php endif; ?>
+    <?php if ($edit_success): ?><div class="alert alert-success mb-2"><?= $edit_success ?></div><?php endif; ?>
+    <?php if ($edit_error): ?><div class="alert alert-danger mb-2"><?= $edit_error ?></div><?php endif; ?>
+    <?php if ($delete_success): ?><div class="alert alert-success mb-2"><?= $delete_success ?></div><?php endif; ?>
+    <?php if ($delete_error): ?><div class="alert alert-danger mb-2"><?= $delete_error ?></div><?php endif; ?>
+    <div class="dashboard-table mb-4">
+    <table class="table mb-0">
         <thead class="table-light">
             <tr>
                 <th>ID</th>
@@ -92,10 +97,10 @@ $categories = $cat_stmt->fetchAll();
                 <td><?= htmlspecialchars($cat['name']) ?></td>
                 <td><?= htmlspecialchars($cat['description']) ?></td>
                 <td>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCategoryModal<?= $cat['id'] ?>">Edit</button>
+                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editCategoryModal<?= $cat['id'] ?>">Edit</button>
                     <form method="post" style="display:inline">
                         <input type="hidden" name="delete_category_id" value="<?= $cat['id'] ?>">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this category?')">Delete</button>
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this category?')">Delete</button>
                     </form>
                     <!-- Edit Modal -->
                     <div class="modal fade" id="editCategoryModal<?= $cat['id'] ?>" tabindex="-1" aria-labelledby="editCategoryModalLabel<?= $cat['id'] ?>" aria-hidden="true">
@@ -109,12 +114,12 @@ $categories = $cat_stmt->fetchAll();
                             <form method="post" autocomplete="off">
                                 <input type="hidden" name="edit_category_id" value="<?= $cat['id'] ?>">
                                 <div class="mb-3">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" class="form-control" name="edit_name" value="<?= htmlspecialchars($cat['name']) ?>" required>
+                                    <label class="form-label" for="edit_name_<?= $cat['id'] ?>">Name</label>
+                                    <input type="text" class="form-control" id="edit_name_<?= $cat['id'] ?>" name="edit_name" value="<?= htmlspecialchars($cat['name']) ?>" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Description</label>
-                                    <textarea class="form-control" name="edit_description" rows="2"><?= htmlspecialchars($cat['description']) ?></textarea>
+                                    <label class="form-label" for="edit_description_<?= $cat['id'] ?>">Description</label>
+                                    <textarea class="form-control" id="edit_description_<?= $cat['id'] ?>" name="edit_description" rows="2"><?= htmlspecialchars($cat['description']) ?></textarea>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Save Changes</button>
                             </form>
@@ -127,26 +132,27 @@ $categories = $cat_stmt->fetchAll();
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
     <!-- Add Modal -->
     <div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="addCategoryModalLabel">Add Category</h5>
+            <h5 class="modal-title" id="addCategoryModalLabel">Add New Category</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form method="post" autocomplete="off">
                 <input type="hidden" name="add_category" value="1">
                 <div class="mb-3">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control" name="name" required>
+                    <label class="form-label" for="add_category_name">Name</label>
+                    <input type="text" class="form-control" id="add_category_name" name="name" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" name="description" rows="2"></textarea>
+                    <label class="form-label" for="add_category_description">Description</label>
+                    <textarea class="form-control" id="add_category_description" name="description" rows="2"></textarea>
                 </div>
-                <button type="submit" class="btn btn-success w-100">Add Category</button>
+                <button type="submit" class="btn btn-primary">Add Category</button>
             </form>
           </div>
         </div>

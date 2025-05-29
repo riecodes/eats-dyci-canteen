@@ -91,16 +91,21 @@ $prod_stmt = $pdo->prepare("SELECT * FROM products WHERE stall_id IN (" . implod
 $prod_stmt->execute();
 $products = $prod_stmt->fetchAll();
 ?>
-<div class="container-fluid">
-    <h2>Product Management</h2>
-    <?php if ($add_success): ?><div class="alert alert-success"><?= $add_success ?></div><?php endif; ?>
-    <?php if ($add_error): ?><div class="alert alert-danger"><?= $add_error ?></div><?php endif; ?>
-    <?php if ($edit_success): ?><div class="alert alert-success"><?= $edit_success ?></div><?php endif; ?>
-    <?php if ($edit_error): ?><div class="alert alert-danger"><?= $edit_error ?></div><?php endif; ?>
-    <?php if ($delete_success): ?><div class="alert alert-success"><?= $delete_success ?></div><?php endif; ?>
-    <?php if ($delete_error): ?><div class="alert alert-danger"><?= $delete_error ?></div><?php endif; ?>
-    <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addProductModal">Add Product</button>
-    <table class="table table-bordered table-hover">
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<div class="container-fluid px-4 pt-4">
+    <div class="dashboard-section-title mb-3">Product Management</div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-bold">All Products</div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">Add Product</button>
+    </div>
+    <?php if ($add_success): ?><div class="alert alert-success mb-2"><?= $add_success ?></div><?php endif; ?>
+    <?php if ($add_error): ?><div class="alert alert-danger mb-2"><?= $add_error ?></div><?php endif; ?>
+    <?php if ($edit_success): ?><div class="alert alert-success mb-2"><?= $edit_success ?></div><?php endif; ?>
+    <?php if ($edit_error): ?><div class="alert alert-danger mb-2"><?= $edit_error ?></div><?php endif; ?>
+    <?php if ($delete_success): ?><div class="alert alert-success mb-2"><?= $delete_success ?></div><?php endif; ?>
+    <?php if ($delete_error): ?><div class="alert alert-danger mb-2"><?= $delete_error ?></div><?php endif; ?>
+    <div class="dashboard-table mb-4">
+    <table class="table mb-0">
         <thead class="table-light">
             <tr>
                 <th>ID</th>
@@ -122,10 +127,10 @@ $products = $prod_stmt->fetchAll();
                 <td><?= htmlspecialchars($prod['category_id']) ?></td>
                 <td><?php if ($prod['image']): ?><img src="<?= $prod['image'] ?>" alt="" style="max-width:60px;max-height:60px;object-fit:cover;"/><?php endif; ?></td>
                 <td>
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $prod['id'] ?>">Edit</button>
+                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $prod['id'] ?>">Edit</button>
                     <form method="post" style="display:inline">
                         <input type="hidden" name="delete_product_id" value="<?= $prod['id'] ?>">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this product?')">Delete</button>
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this product?')">Delete</button>
                     </form>
                     <!-- Edit Modal -->
                     <div class="modal fade" id="editProductModal<?= $prod['id'] ?>" tabindex="-1" aria-labelledby="editProductModalLabel<?= $prod['id'] ?>" aria-hidden="true">
@@ -139,20 +144,20 @@ $products = $prod_stmt->fetchAll();
                             <form method="post" enctype="multipart/form-data" autocomplete="off">
                                 <input type="hidden" name="edit_product_id" value="<?= $prod['id'] ?>">
                                 <div class="mb-3">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" class="form-control" name="edit_name" value="<?= htmlspecialchars($prod['name']) ?>" required>
+                                    <label class="form-label" for="edit_name_<?= $prod['id'] ?>">Name</label>
+                                    <input type="text" class="form-control" id="edit_name_<?= $prod['id'] ?>" name="edit_name" value="<?= htmlspecialchars($prod['name']) ?>" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Description</label>
-                                    <textarea class="form-control" name="edit_description" rows="2"><?= htmlspecialchars($prod['description']) ?></textarea>
+                                    <label class="form-label" for="edit_description_<?= $prod['id'] ?>">Description</label>
+                                    <textarea class="form-control" id="edit_description_<?= $prod['id'] ?>" name="edit_description" rows="2"><?= htmlspecialchars($prod['description']) ?></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Price</label>
-                                    <input type="number" step="0.01" class="form-control" name="edit_price" value="<?= $prod['price'] ?>" required>
+                                    <label class="form-label" for="edit_price_<?= $prod['id'] ?>">Price</label>
+                                    <input type="number" step="0.01" class="form-control" id="edit_price_<?= $prod['id'] ?>" name="edit_price" value="<?= $prod['price'] ?>" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Category</label>
-                                    <select class="form-select" name="edit_category_id">
+                                    <label class="form-label" for="edit_category_id_<?= $prod['id'] ?>">Category</label>
+                                    <select class="form-select" id="edit_category_id_<?= $prod['id'] ?>" name="edit_category_id">
                                         <option value="">None</option>
                                         <?php foreach ($categories as $cat): ?>
                                             <option value="<?= $cat['id'] ?>" <?php if ($prod['category_id'] == $cat['id']) echo 'selected'; ?>><?= htmlspecialchars($cat['name']) ?></option>
@@ -160,8 +165,8 @@ $products = $prod_stmt->fetchAll();
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Image</label>
-                                    <input type="file" class="form-control" name="edit_image">
+                                    <label class="form-label" for="edit_image_<?= $prod['id'] ?>">Image</label>
+                                    <input type="file" class="form-control" id="edit_image_<?= $prod['id'] ?>" name="edit_image">
                                     <?php if ($prod['image']): ?><img src="<?= $prod['image'] ?>" alt="" style="max-width:60px;max-height:60px;object-fit:cover;"/><?php endif; ?>
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100">Save Changes</button>
@@ -175,32 +180,33 @@ $products = $prod_stmt->fetchAll();
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
     <!-- Add Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="addProductModalLabel">Add Product</h5>
+            <h5 class="modal-title" id="addProductModalLabel">Add New Product</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form method="post" enctype="multipart/form-data" autocomplete="off">
                 <input type="hidden" name="add_product" value="1">
                 <div class="mb-3">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control" name="name" required>
+                    <label class="form-label" for="add_product_name">Name</label>
+                    <input type="text" class="form-control" id="add_product_name" name="name" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" name="description" rows="2"></textarea>
+                    <label class="form-label" for="add_product_description">Description</label>
+                    <textarea class="form-control" id="add_product_description" name="description" rows="2"></textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Price</label>
-                    <input type="number" step="0.01" class="form-control" name="price" required>
+                    <label class="form-label" for="add_product_price">Price</label>
+                    <input type="number" step="0.01" class="form-control" id="add_product_price" name="price" required>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Category</label>
-                    <select class="form-select" name="category_id">
+                    <label class="form-label" for="add_product_category_id">Category</label>
+                    <select class="form-select" id="add_product_category_id" name="category_id">
                         <option value="">None</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
@@ -208,18 +214,18 @@ $products = $prod_stmt->fetchAll();
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Stall</label>
-                    <select class="form-select" name="stall_id" required>
+                    <label class="form-label" for="add_product_stall_id">Stall</label>
+                    <select class="form-select" id="add_product_stall_id" name="stall_id" required>
                         <?php foreach ($stalls as $stall): ?>
                             <option value="<?= $stall['id'] ?>"><?= htmlspecialchars($stall['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Image</label>
-                    <input type="file" class="form-control" name="image">
+                    <label class="form-label" for="add_product_image">Image</label>
+                    <input type="file" class="form-control" id="add_product_image" name="image">
                 </div>
-                <button type="submit" class="btn btn-success w-100">Add Product</button>
+                <button type="submit" class="btn btn-primary">Add Product</button>
             </form>
           </div>
         </div>

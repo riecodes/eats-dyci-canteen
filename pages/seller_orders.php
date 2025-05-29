@@ -100,8 +100,9 @@ if ($orders) {
     }
 }
 ?>
-<div class="container-fluid">
-    <h2>Order Management</h2>
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<div class="container-fluid px-4 pt-4">
+    <div class="dashboard-section-title mb-3">Order Management</div>
     <div class="mb-4">
         <h5>My Payment QR Code</h5>
         <img src="<?= $seller_qr ?>" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;">
@@ -112,9 +113,10 @@ if ($orders) {
         <?php if ($qr_success): ?><div class="alert alert-success mt-2"><?= $qr_success ?></div><?php endif; ?>
         <?php if ($qr_error): ?><div class="alert alert-danger mt-2"><?= $qr_error ?></div><?php endif; ?>
     </div>
-    <?php if ($status_success): ?><div class="alert alert-success"><?= $status_success ?></div><?php endif; ?>
-    <?php if ($status_error): ?><div class="alert alert-danger"><?= $status_error ?></div><?php endif; ?>
-    <table class="table table-bordered table-hover">
+    <?php if ($status_success): ?><div class="alert alert-success mb-2"><?= $status_success ?></div><?php endif; ?>
+    <?php if ($status_error): ?><div class="alert alert-danger mb-2"><?= $status_error ?></div><?php endif; ?>
+    <div class="dashboard-table mb-4">
+    <table class="table mb-0">
         <thead class="table-light">
             <tr>
                 <th>Order Ref</th>
@@ -150,8 +152,8 @@ if ($orders) {
                         <?php if ($order['status'] === 'queue' || $order['status'] === 'pending'): ?>
                             <form method="post" style="display:inline">
                                 <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-success">Approve Payment</button>
-                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-danger" onclick="return confirm('Decline and cancel this order?')">Decline</button>
+                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-outline-success">Approve Payment</button>
+                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-outline-danger" onclick="return confirm('Decline and cancel this order?')">Decline</button>
                             </form>
                         <?php endif; ?>
                     <?php else: ?>
@@ -159,13 +161,13 @@ if ($orders) {
                         <?php if ($order['status'] === 'queue' || $order['status'] === 'pending'): ?>
                             <form method="post" style="display:inline">
                                 <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-primary">Mark Processing</button>
-                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-danger" onclick="return confirm('Cancel this order?')">Cancel</button>
+                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-outline-primary">Mark Processing</button>
+                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this order?')">Cancel</button>
                             </form>
                         <?php elseif ($order['status'] === 'processing'): ?>
                             <form method="post" style="display:inline">
                                 <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                <button type="submit" name="action" value="done" class="btn btn-sm btn-success">Mark Done</button>
+                                <button type="submit" name="action" value="done" class="btn btn-sm btn-outline-success">Mark Done</button>
                             </form>
                         <?php endif; ?>
                     <?php endif; ?>
@@ -174,4 +176,5 @@ if ($orders) {
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 </div> 

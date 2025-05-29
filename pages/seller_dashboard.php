@@ -43,7 +43,6 @@ $recent_orders = $stmt->fetchAll();
   <div class="dashboard-header">
     <h1 class="dashboard-title">Welcome, <?= htmlspecialchars($_SESSION['user_name'])?>! </h1>    
   </div>
-  <!-- Top Stats Row - 3 cards spanning full width -->
   <div class="row dashboard-cards">
     <div class="col-12 col-md-4 mb-3">
       <div class="dashboard-card">
@@ -73,7 +72,6 @@ $recent_orders = $stmt->fetchAll();
       </div>
     </div>
   </div>
-  <!-- Recent Orders Section -->
   <div class="dashboard-section-title">Recent Orders</div>
   <div class="dashboard-table mb-4">
     <table class="table mb-0">

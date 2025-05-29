@@ -88,55 +88,22 @@ $stmt = $pdo->prepare('SELECT * FROM announcements WHERE seller_id = ? ORDER BY 
 $stmt->execute([$seller_id]);
 $announcements = $stmt->fetchAll();
 ?>
-<div class="container-fluid">
-    <h2>My Announcements</h2>
-    <?php if ($add_success): ?><div class="alert alert-success"><?= $add_success ?></div><?php endif; ?>
-    <?php if ($add_error): ?><div class="alert alert-danger"><?= $add_error ?></div><?php endif; ?>
-    <?php if ($edit_success): ?><div class="alert alert-success"><?= $edit_success ?></div><?php endif; ?>
-    <?php if ($edit_error): ?><div class="alert alert-danger"><?= $edit_error ?></div><?php endif; ?>
-    <?php if ($delete_success): ?><div class="alert alert-success"><?= $delete_success ?></div><?php endif; ?>
-    <?php if ($delete_error): ?><div class="alert alert-danger"><?= $delete_error ?></div><?php endif; ?>
-    <div class="card mb-4">
-        <div class="card-header">Add Announcement</div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
-                <input type="hidden" name="add_announcement" value="1">
-                <div class="mb-3">
-                    <label class="form-label">Title</label>
-                    <input type="text" class="form-control" name="title" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Message</label>
-                    <textarea class="form-control" name="message" rows="3" required></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Type</label>
-                    <select class="form-select" name="type">
-                        <option value="info">Info</option>
-                        <option value="warning">Warning</option>
-                        <option value="promo">Promo</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Stall</label>
-                    <select class="form-select" name="stall_id" required>
-                        <option value="">Select stall</option>
-                        <?php foreach ($stalls as $stall): ?>
-                            <option value="<?= $stall['id'] ?>"><?= htmlspecialchars($stall['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Image (optional)</label>
-                    <input type="file" class="form-control" name="image" accept="image/*">
-                </div>
-                <button type="submit" class="btn btn-primary">Add Announcement</button>
-            </form>
-        </div>
+<link rel="stylesheet" href="../assets/css/dashboard.css">
+<div class="container-fluid px-4 pt-4">
+    <div class="dashboard-section-title mb-3">Announcement Management</div>
+    <?php if ($add_success): ?><div class="alert alert-success mb-2"><?= $add_success ?></div><?php endif; ?>
+    <?php if ($add_error): ?><div class="alert alert-danger mb-2"><?= $add_error ?></div><?php endif; ?>
+    <?php if ($edit_success): ?><div class="alert alert-success mb-2"><?= $edit_success ?></div><?php endif; ?>
+    <?php if ($edit_error): ?><div class="alert alert-danger mb-2"><?= $edit_error ?></div><?php endif; ?>
+    <?php if ($delete_success): ?><div class="alert alert-success mb-2"><?= $delete_success ?></div><?php endif; ?>
+    <?php if ($delete_error): ?><div class="alert alert-danger mb-2"><?= $delete_error ?></div><?php endif; ?>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="fw-bold">All Announcements</div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">Add Announcement</button>
     </div>
-    <div class="table-responsive">
-        <table class="table table-bordered align-middle">
-            <thead class="table-light">
+    <div class="dashboard-table mb-4">
+        <table class="table mb-0">
+            <thead>
                 <tr>
                     <th>Title</th>
                     <th>Message</th>
@@ -170,10 +137,10 @@ $announcements = $stmt->fetchAll();
                     </td>
                     <td><?= date('Y-m-d H:i', strtotime($a['created_at'])) ?></td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editAnnouncementModal<?= $a['id'] ?>">Edit</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editAnnouncementModal<?= $a['id'] ?>">Edit</button>
                         <form method="post" style="display:inline" onsubmit="return confirm('Delete this announcement?')">
                             <input type="hidden" name="delete_announcement_id" value="<?= $a['id'] ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                         </form>
                         <!-- Edit Modal -->
                         <div class="modal fade" id="editAnnouncementModal<?= $a['id'] ?>" tabindex="-1" aria-labelledby="editAnnouncementModalLabel<?= $a['id'] ?>" aria-hidden="true">
@@ -230,4 +197,42 @@ $announcements = $stmt->fetchAll();
             </tbody>
         </table>
     </div>
+    <!-- Add Announcement Modal -->
+    <div class="modal fade" id="addAnnouncementModal" tabindex="-1" aria-labelledby="addAnnouncementModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addAnnouncementModalLabel">Add Announcement</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="add_announcement" value="1">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-control" name="message" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" name="type">
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="promo">Promo</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Stall</label>
+                            <select class="form-select" name="stall_id" required>
+                                <option value="">Select stall</option>
+                                <?php foreach ($stalls as $stall): ?>
+                                    <option value="<?= $stall['id'] ?>"><?= htmlspecialchars($stall['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image (optional)</label>
 </div> 
