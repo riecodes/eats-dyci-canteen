@@ -179,11 +179,12 @@ $announcements = $stmt->fetchAll();
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Image (optional)</label>
+                                        <input type="file" class="form-control" name="edit_image" id="edit_announcement_image_<?= $a['id'] ?>" accept="image/*" onchange="previewEditAnnouncementImage(event, <?= $a['id'] ?>)">
                                         <?php if ($a['image']): ?>
-                                            <img src="<?= htmlspecialchars($a['image']) ?>" alt="Image" style="max-width:80px;max-height:80px;display:block;margin-bottom:5px;">
+                                            <img id="edit_announcement_image_preview_<?= $a['id'] ?>" src="<?= htmlspecialchars($a['image']) ?>" alt="Image" style="max-width:80px;max-height:80px;display:block;margin-bottom:5px;">
+                                        <?php else: ?>
+                                            <img id="edit_announcement_image_preview_<?= $a['id'] ?>" src="#" alt="Preview" style="display:none;max-width:80px;max-height:80px;margin-bottom:5px;">
                                         <?php endif; ?>
-                                        <input type="file" class="form-control" name="edit_image" accept="image/*">
-                                        <input type="hidden" name="current_image" value="<?= htmlspecialchars($a['image']) ?>">
                                     </div>
                                     <button type="submit" class="btn btn-primary">Save Changes</button>
                                 </form>
@@ -206,7 +207,7 @@ $announcements = $stmt->fetchAll();
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="post" enctype="multipart/form-data">
+                    <form method="post" enctype="multipart/form-data" id="addAnnouncementForm">
                         <input type="hidden" name="add_announcement" value="1">
                         <div class="mb-3">
                             <label class="form-label">Title</label>
@@ -235,4 +236,39 @@ $announcements = $stmt->fetchAll();
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Image (optional)</label>
-</div> 
+                            <input type="file" class="form-control" name="image" id="add_announcement_image" accept="image/*" onchange="previewAddAnnouncementImage(event)">
+                            <img id="add_announcement_image_preview" src="#" alt="Preview" style="display:none;max-width:80px;max-height:80px;margin-top:8px;" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Announcement</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function previewAddAnnouncementImage(event) {
+    const [file] = event.target.files;
+    const preview = document.getElementById('add_announcement_image_preview');
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+    } else {
+        preview.src = '#';
+        preview.style.display = 'none';
+    }
+}
+</script>
+<script>
+function previewEditAnnouncementImage(event, id) {
+    const [file] = event.target.files;
+    const preview = document.getElementById('edit_announcement_image_preview_' + id);
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+    } else {
+        preview.src = '#';
+        preview.style.display = 'none';
+    }
+}
+</script> 
