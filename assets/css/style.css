@@ -61,3 +61,20 @@ body {
 .bg-secondary {
     background-color: var(--secondary-navy) !important;
 }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-gold) 0%, var(--gold-dark) 100%);
+    border: none;
+    color: var(--accent-white);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold-hover) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--shadow-gold);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}

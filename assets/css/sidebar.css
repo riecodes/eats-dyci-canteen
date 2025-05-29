@@ -16,6 +16,26 @@
     text-shadow: 0 1px 2px var(--shadow-navy);
 }
 
+.sidebar-panel-label-admin {
+    color: #170e63;
+}
+.sidebar-panel-label-seller {
+    color: #198754;
+}
+.sidebar-panel-label-buyer {
+    color: #0dcaf0;
+}
+
+.sidebar-icon-admin {
+    color: #170e63 !important;
+}
+.sidebar-icon-seller {
+    color: #198754 !important;
+}
+.sidebar-icon-buyer {
+    color: #0dcaf0 !important;
+}
+
 /* Navigation Links */
 .sidebar .nav-link {
     color: var(--secondary-navy);
