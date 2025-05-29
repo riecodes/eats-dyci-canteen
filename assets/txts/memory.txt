@@ -1,0 +1,73 @@
+EATS-DYCI-CANTEEN PHP PORT PLAN (based on revision.txt & README.md)
+
+## Progress Update (as of latest review)
+
+### 1. Project Setup
+- Folders organized: public/, assets/, database/, includes/, pages/ (admin/, seller/, buyer/ folders not found, but pages/ used)
+- Bootstrap and Google Font (Inter) integrated in all main pages
+- MySQL connection config (config.php, db.php) set up
+
+### 2. Database
+- canteen.sql exists and is used
+- Needs review: all tables, foreign keys, and constraints
+- SQL scripts for backup/restore not yet implemented
+
+### 3. Authentication & User Roles
+- Registration (buyer only) and login (all roles) implemented (register.php, login.php)
+- Role-based access enforced via session checks
+- Admin can create/manage sellers and buyers (admin_users.php)
+
+### 4. Admin Features
+- User management (add/edit/delete users, assign roles) complete (admin_users.php)
+- Stall management (add/edit/delete stalls, assign sellers) complete (admin_stalls.php)
+- Database backup/restore UI not yet implemented
+- Analytics/reporting: dashboard.php has placeholders only
+
+### 5. Seller Features
+- Product management, order management, payment verification, order voiding, and sales analytics: NOT YET IMPLEMENTED
+
+### 6. Buyer Features
+- Self-registration complete (register.php)
+- Browsing canteens/stalls/products, placing orders, payment, receipt upload, order tracking, reviews: NOT YET IMPLEMENTED
+
+### 7. Order & Payment Flow
+- Not yet implemented (no order placement, payment, or status logic found)
+
+### 8. Announcement System
+- Not yet implemented (no announcement creation/viewing/tracking found)
+
+### 9. Security
+- Input sanitization and access control present (needs review for completeness)
+- Passwords hashed
+- Secure file uploads not yet implemented
+
+### 10. Other
+- Changes/fixes documented in memory.txt
+- Responsive design present (Bootstrap used)
+
+### UI/UX & Architecture
+- Bootstrap and Google Font used
+- No admin template; Bootstrap defaults
+- Static QR code image present, but payment/verification logic not yet implemented
+- Single entry point (public/index.php), modular includes, and ?page= routing in place
+
+### Color Palette
+- Gold: #d6b243
+- Deep Blue: #170e63
+- White: #ffffff
+
+---
+
+**Summary:**
+- Core setup, authentication, user/stall management, and UI/UX foundation are in place.
+- Major missing areas: product/order/payment flow, seller/buyer features, announcements, analytics, file uploads, and some security/backup features.
+- Next steps: Prioritize implementation of seller and buyer features, order/payment flow, and announcement system.
+
+**Note:**
+- Never use static data for canteen, stall, or product selection. Always use dynamic data from the database. Order placement flow should be a dynamic single page.
+
+**Recent Changes:**
+- Implemented full buyer order flow: dynamic canteen > stall > product selection, session-based cart, order placement, and order limit logic.
+- Added buyer order tracking and receipt upload (buyer_orders.php).
+- Integrated seller-side order management: view orders, verify receipts, approve/decline, and mark as done (seller_orders.php).
+- All logic is pure PHP, single-page, no AJAX.

@@ -1,0 +1,67 @@
+/* Bootstrap is included via CDN in HTML head */
+/* Google Fonts: Inter, Roboto, or Open Sans (import in HTML head) */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Inter', 'Roboto', 'Open Sans', Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #222;
+    
+}
+html, body {
+    height: 100%;
+}
+
+/* DYCI Color Palette Variables */
+:root {
+    /* Primary Colors */
+    --primary-gold: #d6b243;
+    --secondary-navy: #170e63;
+    --accent-white: #ffffff;
+    
+    /* Derived Gold Colors */
+    --gold-light: #dfc055;
+    --gold-dark: #b8983a;
+    --gold-hover: #c4a139;
+    
+    /* Derived Navy Colors */
+    --navy-light: #2a1f7a;
+    --navy-dark: #110a4e;
+    --navy-hover: #0f0951;
+    
+    /* Utility Colors with Transparency */
+    --shadow-gold: rgba(214, 178, 67, 0.2);
+    --shadow-navy: rgba(23, 14, 99, 0.3);
+    --border-navy: rgba(23, 14, 99, 0.3);
+    --focus-gold: rgba(214, 178, 67, 0.25);
+    --background-white: rgba(255, 255, 255, 0.95);
+    
+    /* Text Colors */
+    --text-primary: var(--primary-gold);
+    --text-secondary: var(--secondary-navy);
+    --text-light: rgba(214, 178, 67, 0.6);
+    
+    /* Error Colors */
+    --error-bg: rgba(220, 53, 69, 0.1);
+    --error-border: rgba(220, 53, 69, 0.3);
+}
+
+/* Global Utility Classes */
+.text-primary {
+    color: var(--primary-gold) !important;
+}
+
+.text-secondary {
+    color: var(--secondary-navy) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-gold) !important;
+}
+
+.bg-secondary {
+    background-color: var(--secondary-navy) !important;
+}

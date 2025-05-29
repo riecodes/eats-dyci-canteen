@@ -1,0 +1,90 @@
+/* Sidebar Styles */
+.sidebar {
+    background: var(--background-white);
+    border-right: 1.5px solid var(--border-navy);
+    box-shadow: 0 2px 8px var(--shadow-navy);
+    transition: all 0.3s ease;
+    width: 240px;
+    overflow-y: auto;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-panel-label {
+    font-family: 'Inter', 'Roboto', 'Open Sans', Arial, sans-serif;
+    text-shadow: 0 1px 2px var(--shadow-navy);
+}
+
+/* Navigation Links */
+.sidebar .nav-link {
+    color: var(--secondary-navy);
+    border-radius: 0.5rem;
+    margin: 0.25rem 0;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    align-items: center;
+}
+
+.sidebar .nav-link:hover {
+    background: var(--shadow-gold);
+    color: var(--primary-gold);
+    transform: translateX(5px);
+}
+
+.sidebar .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-gold) 0%, var(--gold-dark) 100%);
+    color: var(--accent-white);
+    box-shadow: 0 2px 8px var(--shadow-gold);
+}
+
+.sidebar .nav-link i {
+    width: 1.5rem;
+    text-align: center;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+/* Section Headers */
+.sidebar .nav-item.text-uppercase {
+    padding: 0.5rem 1rem;
+    margin-top: 1rem;
+    border-bottom: 1px solid var(--border-navy);
+}
+
+/* Disabled Links */
+.sidebar .nav-link.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.sidebar .nav-link.disabled:hover {
+    transform: none;
+    background: none;
+}
+
+/* Badges */
+.sidebar .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    margin-left: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        margin-left: 0;
+        border-right: none;
+        border-bottom: 1.5px solid var(--border-navy);
+    }
+    .sidebar .nav-link {
+        padding: 0.5rem 0.75rem;
+    }
+    .sidebar .nav-link i {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+    }
+}
