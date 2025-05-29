@@ -188,6 +188,34 @@ if (!$selected_canteen) {
     // Stop here if no canteen selected
     return;
 }
+
+// After canteen selection, show all stalls for the selected canteen as cards
+if ($selected_canteen && !$selected_stall) {
+    // Fetch stalls for selected canteen
+    $stmt = $pdo->prepare('SELECT * FROM stalls WHERE canteen_id = ? ORDER BY name ASC');
+    $stmt->execute([$selected_canteen]);
+    $stalls = $stmt->fetchAll();
+    echo '<div class="row g-4 mb-4">';
+    foreach ($stalls as $stall) {
+        echo '<div class="col-md-4">';
+        echo '<div class="card h-100 shadow-sm">';
+        $img = htmlspecialchars($stall['image'] ?? '../assets/imgs/stall-default.jpg');
+        echo '<img src="' . $img . '" class="card-img-top" alt="Stall Image" style="max-height:200px;object-fit:cover;">';
+        echo '<div class="card-body">';
+        echo '<h5 class="card-title">' . htmlspecialchars($stall['name']) . '</h5>';
+        echo '<p class="card-text">' . htmlspecialchars($stall['description'] ?? '') . '</p>';
+        echo '<form method="get" action="index.php">';
+        echo '<input type="hidden" name="page" value="buyer_order">';
+        echo '<input type="hidden" name="canteen_id" value="' . $selected_canteen . '">';
+        echo '<input type="hidden" name="stall_id" value="' . $stall['id'] . '">';
+        echo '<button type="submit" class="btn btn-primary w-100">Select</button>';
+        echo '</form>';
+        echo '</div></div></div>';
+    }
+    echo '</div>';
+    // Stop here if no stall selected
+    return;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
