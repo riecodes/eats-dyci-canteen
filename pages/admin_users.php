@@ -32,7 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_user'])) {
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)');
             if ($stmt->execute([$name, $email, $hash, $role])) {
-                $add_success = 'User added successfully!';
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 $add_error = 'Failed to add user.';
             }
@@ -46,7 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user_id'])) {
     } else {
         $stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
         if ($stmt->execute([$delete_id])) {
-            $delete_success = 'User deleted successfully!';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $delete_error = 'Failed to delete user.';
         }
@@ -76,35 +78,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
                 $hash = password_hash($edit_password, PASSWORD_DEFAULT);
                 if ($edit_role === 'buyer') {
                     $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, password = ?, department = ?, position = ? WHERE id = ?');
-                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $hash, $edit_department, $edit_position, $edit_id])) {
-                        $edit_success = 'User updated successfully!';
-                    } else {
-                        $edit_error = 'Failed to update user.';
-                    }
+                    $params = [$edit_name, $edit_email, $edit_role, $hash, $edit_department, $edit_position, $edit_id];
                 } else {
                     $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, password = ? WHERE id = ?');
-                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $hash, $edit_id])) {
-                        $edit_success = 'User updated successfully!';
-                    } else {
-                        $edit_error = 'Failed to update user.';
-                    }
+                    $params = [$edit_name, $edit_email, $edit_role, $hash, $edit_id];
                 }
             } else {
                 if ($edit_role === 'buyer') {
                     $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, department = ?, position = ? WHERE id = ?');
-                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $edit_department, $edit_position, $edit_id])) {
-                        $edit_success = 'User updated successfully!';
-                    } else {
-                        $edit_error = 'Failed to update user.';
-                    }
+                    $params = [$edit_name, $edit_email, $edit_role, $edit_department, $edit_position, $edit_id];
                 } else {
                     $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?');
-                    if ($stmt->execute([$edit_name, $edit_email, $edit_role, $edit_id])) {
-                        $edit_success = 'User updated successfully!';
-                    } else {
-                        $edit_error = 'Failed to update user.';
-                    }
+                    $params = [$edit_name, $edit_email, $edit_role, $edit_id];
                 }
+            }
+            if ($stmt->execute($params)) {
+                header('Location: ' . $_SERVER['REQUEST_URI']);
+                exit;
+            } else {
+                $edit_error = 'Failed to update user.';
             }
         }
     }
