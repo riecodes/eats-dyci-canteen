@@ -9,7 +9,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'seller')
 }
 $seller_id = $_SESSION['user_id'];
 // Get all stalls owned by this seller
-$stalls = $pdo->prepare('SELECT id, name FROM stalls WHERE owner_id = ? ORDER BY name ASC');
+$stalls = $pdo->prepare('SELECT id, name FROM stalls WHERE user_id = ? ORDER BY name ASC');
 $stalls->execute([$seller_id]);
 $stalls = $stalls->fetchAll();
 $stall_ids = array_column($stalls, 'id');

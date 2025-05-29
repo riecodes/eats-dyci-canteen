@@ -7,7 +7,7 @@ require_once __DIR__ . '/../includes/db.php';
 
 $seller_id = $_SESSION['user_id'];
 // Get all stalls owned by this seller
-$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE owner_id = ?");
+$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE seller_id = ?");
 $stall_stmt->execute([$seller_id]);
 $stalls = $stall_stmt->fetchAll();
 $stall_ids = array_column($stalls, 'id');
@@ -39,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     if (!$name || !$price || !$stall_id) {
         $add_error = 'Name, price, and stall are required.';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO foods (name, description, price, image, category_id, stall_id) VALUES (?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id])) {
+        $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id])) {
             $add_success = 'Product added successfully!';
         } else {
             $add_error = 'Failed to add product.';
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
 // Delete product
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_product_id'])) {
     $del_id = intval($_POST['delete_product_id']);
-    $stmt = $pdo->prepare("DELETE FROM foods WHERE id = ? AND stall_id IN (" . implode(',', $stall_ids) . ")");
+    $stmt = $pdo->prepare("DELETE FROM products WHERE id = ? AND stall_id IN (" . implode(',', $stall_ids) . ")");
     if ($stmt->execute([$del_id])) {
         $delete_success = 'Product deleted.';
     } else {
@@ -70,25 +70,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
         $target = '../assets/imgs/products_' . uniqid() . '.' . $ext;
         if (move_uploaded_file($_FILES['edit_image']['tmp_name'], $target)) {
             $edit_image_url = $target;
-    }
-            $params[] = $edit_image_url;
-        }
-        $sql .= " WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")";
-        $params[] = $edit_id;
-        $stmt = $pdo->prepare($sql);
-        if ($stmt->execute($params)) {
-            $edit_success = 'Product updated.';
-        } else {
-            $edit_error = 'Failed to update product.';
         }
     }
+    $sql = "UPDATE products SET name=?, description=?, price=?, category_id=?, image=? WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")";
+    $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_image_url, $edit_id];
+    $stmt = $pdo->prepare($sql);
+    if ($stmt->execute($params)) {
+        $edit_success = 'Product updated.';
+    } else {
+        $edit_error = 'Failed to update product.';
+    }
+}
 
 // Get all categories for the seller's stalls
 $cat_stmt = $pdo->prepare("SELECT * FROM categories WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
 $cat_stmt->execute();
 $categories = $cat_stmt->fetchAll();
 // Get all products for the seller's stalls
-$prod_stmt = $pdo->prepare("SELECT * FROM foods WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
+$prod_stmt = $pdo->prepare("SELECT * FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
 $prod_stmt->execute();
 $products = $prod_stmt->fetchAll();
 ?>

@@ -12,7 +12,7 @@ $total_admins = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->
 $total_sellers = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'seller'")->fetchColumn();
 $total_buyers = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'buyer'")->fetchColumn();
 $total_stalls = $pdo->query("SELECT COUNT(*) FROM stalls")->fetchColumn();
-$total_products = $pdo->query("SELECT COUNT(*) FROM foods")->fetchColumn();
+$total_products = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
 
 // Orders this month
 $stmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDATE())");

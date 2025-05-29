@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'seller')
 require_once __DIR__ . '/../includes/db.php';
 
 $seller_id = $_SESSION['user_id'];
-$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE owner_id = ?");
+$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE user_id = ?");
 
 if (empty($stall_ids)) {
     echo '<div class="alert alert-warning">You do not own any stalls. Please contact admin.</div>';
@@ -65,8 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_POST['
 
 // Get all orders for the seller's stalls
 $order_stmt = $pdo->prepare("SELECT * FROM orders WHERE orderRef IN (
-    SELECT DISTINCT order_id FROM order_items WHERE food_id IN (
-        SELECT id FROM foods WHERE stall_id IN (" . implode(',', $stall_ids) . ")
+    SELECT DISTINCT order_id FROM order_items WHERE product_id IN (
+        SELECT id FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . ")
     )
 ) ORDER BY created_at DESC");
 $order_stmt->execute();
@@ -77,7 +77,7 @@ $order_refs = array_column($orders, 'orderRef');
 $order_items = [];
 if ($order_refs) {
     $in = str_repeat('?,', count($order_refs)-1) . '?';
-    $stmt = $pdo->prepare("SELECT oi.*, f.name AS food_name FROM order_items oi JOIN foods f ON oi.food_id=f.id WHERE oi.order_id IN ($in)");
+    $stmt = $pdo->prepare("SELECT oi.*, p.name AS product_name FROM order_items oi JOIN products p ON oi.product_id=p.id WHERE oi.order_id IN ($in)");
     $stmt->execute($order_refs);
     foreach ($stmt->fetchAll() as $row) {
         $order_items[$row['order_id']][] = $row;
@@ -134,7 +134,7 @@ if ($orders) {
                     <?php if (!empty($order_items[$order['orderRef']])): ?>
                         <ul class="mb-0">
                         <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                            <li><?= htmlspecialchars($item['food_name']) ?> x <?= $item['quantity'] ?></li>
+                            <li><?= htmlspecialchars($item['product_name']) ?> x <?= $item['quantity'] ?></li>
                         <?php endforeach; ?>
                         </ul>
                     <?php endif; ?>

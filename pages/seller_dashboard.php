@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'seller')
 }
 $seller_id = $_SESSION['user_id'];
 // Get all stalls owned by this seller
-$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE owner_id = ?");
+$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE user_id = ?");
 $stall_stmt->execute([$seller_id]);
 $stalls = $stall_stmt->fetchAll();
 $stall_ids = array_column($stalls, 'id');
@@ -17,22 +17,22 @@ if (empty($stall_ids)) {
     return;
 }
 // Total products
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM foods WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
 $stmt->execute();
 $total_products = $stmt->fetchColumn();
 // Total orders
-$stmt = $pdo->prepare("SELECT COUNT(DISTINCT order_id) FROM order_items WHERE food_id IN (SELECT id FROM foods WHERE stall_id IN (" . implode(',', $stall_ids) . "))");
+$stmt = $pdo->prepare("SELECT COUNT(DISTINCT order_id) FROM order_items WHERE product_id IN (SELECT id FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . "))");
 $stmt->execute();
 $total_orders = $stmt->fetchColumn();
 // Total sales (sum of order_items * price)
-$stmt = $pdo->prepare("SELECT SUM(oi.quantity * f.price) FROM order_items oi JOIN foods f ON oi.food_id=f.id WHERE f.stall_id IN (" . implode(',', $stall_ids) . ")");
+$stmt = $pdo->prepare("SELECT SUM(oi.quantity * p.price) FROM order_items oi JOIN products p ON oi.product_id=p.id WHERE p.stall_id IN (" . implode(',', $stall_ids) . ")");
 $stmt->execute();
 $total_sales = $stmt->fetchColumn();
 if ($total_sales === null) $total_sales = 0;
 // Recent orders (last 5)
 $stmt = $pdo->prepare("SELECT o.orderRef, o.created_at, o.status, o.total_price FROM orders o WHERE o.orderRef IN (
-    SELECT DISTINCT order_id FROM order_items WHERE food_id IN (
-        SELECT id FROM foods WHERE stall_id IN (" . implode(',', $stall_ids) . ")
+    SELECT DISTINCT order_id FROM order_items WHERE product_id IN (
+        SELECT id FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . ")
     )
 ) ORDER BY o.created_at DESC LIMIT 5");
 $stmt->execute();

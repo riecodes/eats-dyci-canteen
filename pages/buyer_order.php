@@ -17,20 +17,20 @@ $cart = &$_SESSION['cart'];
 
 // Handle add to cart
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
-    $food_id = intval($_POST['food_id']);
+    $product_id = intval($_POST['product_id']);
     $qty = max(1, intval($_POST['quantity']));
     // Fetch product to check stock
-    $stmt = $pdo->prepare('SELECT * FROM foods WHERE id = ?');
-    $stmt->execute([$food_id]);
+    $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+    $stmt->execute([$product_id]);
     $product = $stmt->fetch();
     if ($product && $qty <= $product['stock']) {
-        if (isset($cart[$food_id])) {
-            $cart[$food_id] += $qty;
-            if ($cart[$food_id] > $product['stock']) {
-                $cart[$food_id] = $product['stock'];
+        if (isset($cart[$product_id])) {
+            $cart[$product_id] += $qty;
+            if ($cart[$product_id] > $product['stock']) {
+                $cart[$product_id] = $product['stock'];
             }
         } else {
-            $cart[$food_id] = $qty;
+            $cart[$product_id] = $qty;
         }
         $cart_success = 'Added to cart!';
     } else {
@@ -39,25 +39,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 }
 // Handle update cart
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
-    foreach ($_POST['quantities'] as $food_id => $qty) {
-        $food_id = intval($food_id);
+    foreach ($_POST['quantities'] as $product_id => $qty) {
+        $product_id = intval($product_id);
         $qty = max(1, intval($qty));
         // Check stock
-        $stmt = $pdo->prepare('SELECT stock FROM foods WHERE id = ?');
-        $stmt->execute([$food_id]);
+        $stmt = $pdo->prepare('SELECT stock FROM products WHERE id = ?');
+        $stmt->execute([$product_id]);
         $stock = $stmt->fetchColumn();
         if ($stock !== false && $qty <= $stock) {
-            $cart[$food_id] = $qty;
+            $cart[$product_id] = $qty;
         } elseif ($stock !== false) {
-            $cart[$food_id] = $stock;
+            $cart[$product_id] = $stock;
         }
     }
     $cart_success = 'Cart updated!';
 }
 // Handle remove from cart
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) {
-    $food_id = intval($_POST['food_id']);
-    unset($cart[$food_id]);
+    $product_id = intval($_POST['product_id']);
+    unset($cart[$product_id]);
     $cart_success = 'Item removed from cart.';
 }
 
@@ -79,7 +79,7 @@ if ($selected_canteen) {
 // Fetch products for selected stall
 $products = [];
 if ($selected_stall) {
-    $stmt = $pdo->prepare('SELECT * FROM foods WHERE stall_id = ? ORDER BY name ASC');
+    $stmt = $pdo->prepare('SELECT * FROM products WHERE stall_id = ? ORDER BY name ASC');
     $stmt->execute([$selected_stall]);
     $products = $stmt->fetchAll();
 }
@@ -103,33 +103,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             // 2. Check stock for each item
             $valid = true;
             $cart_products = [];
-            foreach ($cart as $food_id => $qty) {
-                $stmt = $pdo->prepare('SELECT * FROM foods WHERE id = ?');
-                $stmt->execute([$food_id]);
+            foreach ($cart as $product_id => $qty) {
+                $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+                $stmt->execute([$product_id]);
                 $prod = $stmt->fetch();
                 if (!$prod || $qty > $prod['stock']) {
                     $valid = false;
                     $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
                     break;
                 }
-                $cart_products[$food_id] = $prod;
+                $cart_products[$product_id] = $prod;
             }
             if ($valid) {
                 // 3. Insert order
                 $orderRef = uniqid('ORD');
                 $total_price = 0;
-                foreach ($cart as $food_id => $qty) {
-                    $total_price += $cart_products[$food_id]['price'] * $qty;
+                foreach ($cart as $product_id => $qty) {
+                    $total_price += $cart_products[$product_id]['price'] * $qty;
                 }
                 $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price) VALUES (?, ?, ?)');
                 if ($stmt->execute([$orderRef, $user_id, $total_price])) {
                     // 4. Insert order items and update stock
-                    foreach ($cart as $food_id => $qty) {
-                        $stmt = $pdo->prepare('INSERT INTO order_items (order_id, food_id, quantity) VALUES (?, ?, ?)');
-                        $stmt->execute([$orderRef, $food_id, $qty]);
+                    foreach ($cart as $product_id => $qty) {
+                        $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
+                        $stmt->execute([$orderRef, $product_id, $qty]);
                         // Update stock
-                        $stmt = $pdo->prepare('UPDATE foods SET stock = stock - ? WHERE id = ?');
-                        $stmt->execute([$qty, $food_id]);
+                        $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+                        $stmt->execute([$qty, $product_id]);
                     }
                     // 5. Clear cart
                     $_SESSION['cart'] = [];
@@ -193,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                         <div class="mb-1 text-muted">₱<?= number_format($product['price'],2) ?></div>
                                         <div class="mb-2 small">Stock: <?= (int)$product['stock'] ?></div>
                                         <form method="post" class="d-flex align-items-center gap-2">
-                                            <input type="hidden" name="food_id" value="<?= $product['id'] ?>">
+                                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                                             <input type="number" class="form-control form-control-sm" name="quantity" min="1" max="<?= (int)$product['stock'] ?>" value="1" style="width:70px;">
                                             <button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" <?= $product['stock'] < 1 ? 'disabled' : '' ?>>Add</button>
                                         </form>
@@ -233,9 +233,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             <tbody>
                                 <?php
                                 $total = 0;
-                                foreach ($cart as $food_id => $qty):
-                                    $stmt = $pdo->prepare('SELECT * FROM foods WHERE id = ?');
-                                    $stmt->execute([$food_id]);
+                                foreach ($cart as $product_id => $qty):
+                                    $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+                                    $stmt->execute([$product_id]);
                                     $prod = $stmt->fetch();
                                     if (!$prod) continue;
                                     $subtotal = $prod['price'] * $qty;
@@ -244,11 +244,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                                 <tr>
                                     <td><?= htmlspecialchars($prod['name']) ?></td>
                                     <td>₱<?= number_format($prod['price'],2) ?></td>
-                                    <td><input type="number" name="quantities[<?= $food_id ?>]" value="<?= $qty ?>" min="1" max="<?= (int)$prod['stock'] ?>" class="form-control form-control-sm" style="width:70px;"></td>
+                                    <td><input type="number" name="quantities[<?= $product_id ?>]" value="<?= $qty ?>" min="1" max="<?= (int)$prod['stock'] ?>" class="form-control form-control-sm" style="width:70px;"></td>
                                     <td>₱<?= number_format($subtotal,2) ?></td>
                                     <td>
-                                        <button type="submit" name="remove_from_cart" value="1" class="btn btn-danger btn-sm" formaction="" formmethod="post" onclick="this.form.food_id.value=<?= $food_id ?>;">Remove</button>
-                                        <input type="hidden" name="food_id" value="<?= $food_id ?>">
+                                        <button type="submit" name="remove_from_cart" value="1" class="btn btn-danger btn-sm" formaction="" formmethod="post" onclick="this.form.product_id.value=<?= $product_id ?>;">Remove</button>
+                                        <input type="hidden" name="product_id" value="<?= $product_id ?>">
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

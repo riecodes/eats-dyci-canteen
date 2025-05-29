@@ -7,7 +7,7 @@ require_once __DIR__ . '/../includes/db.php';
 
 $seller_id = $_SESSION['user_id'];
 // Get all stalls owned by this seller
-$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE owner_id = ?");
+$stall_stmt = $pdo->prepare("SELECT id, name FROM stalls WHERE user_id = ?");
 $stall_stmt->execute([$seller_id]);
 $stalls = $stall_stmt->fetchAll();
 $stall_ids = array_column($stalls, 'id');
