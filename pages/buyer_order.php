@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
     foreach ($_POST['quantities'] as $product_id => $qty) {
         $product_id = intval($product_id);
-        $qty = max(1, intval($qty));
+        $qty = max(1, min(5, intval($qty)));
         // Check stock
         $stmt = $pdo->prepare('SELECT stock FROM products WHERE id = ?');
         $stmt->execute([$product_id]);
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_cart'])) {
         if ($stock !== false && $qty <= $stock) {
             $cart[$product_id] = $qty;
         } elseif ($stock !== false) {
-            $cart[$product_id] = $stock;
+            $cart[$product_id] = min($stock, 5);
         }
     }
     $cart_success = 'Cart updated!';
@@ -249,6 +249,7 @@ if ($selected_canteen && $selected_stall) {
     $products = $stmt->fetchAll();
     echo '<div class="row g-4 mb-4">';
     foreach ($products as $product) {
+        if ((int)$product['stock'] <= 0) continue;
         echo '<div class="col-md-4">';
         echo '<div class="card h-100 shadow-sm">';
         $img = htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg');
@@ -259,7 +260,7 @@ if ($selected_canteen && $selected_stall) {
         echo '<div class="mb-2 small">Stock: ' . (int)$product['stock'] . '</div>';
         echo '<form method="post" class="d-flex align-items-center gap-2">';
         echo '<input type="hidden" name="product_id" value="' . $product['id'] . '">';
-        echo '<input type="number" class="form-control form-control-sm" name="quantity" min="1" max="' . (int)$product['stock'] . '" value="1" style="width:70px;">';
+        echo '<input type="number" class="form-control form-control-sm" name="quantity" min="1" max="5" value="1" style="width:70px;">';
         $cart_count = array_sum($cart);
         $disabled = ($product['stock'] < 1 || $cart_count >= 5) ? 'disabled' : '';
         echo '<button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" ' . $disabled . '>Add</button>';
@@ -291,7 +292,7 @@ if ($selected_canteen && $selected_stall) {
             echo '<tr>';
             echo '<td>' . htmlspecialchars($prod['name']) . '</td>';
             echo '<td>₱' . number_format($prod['price'],2) . '</td>';
-            echo '<td><input type="number" name="quantities[' . $product_id . ']" value="' . $qty . '" min="1" max="' . (int)$prod['stock'] . '" class="form-control form-control-sm" style="width:70px;"></td>';
+            echo '<td><input type="number" name="quantities[' . $product_id . ']" value="' . $qty . '" min="1" max="5" class="form-control form-control-sm" style="width:70px;"></td>';
             echo '<td>₱' . number_format($subtotal,2) . '</td>';
             echo '<td><button type="submit" name="remove_from_cart" value="1" class="btn btn-danger btn-sm" formaction="" formmethod="post" onclick="this.form.product_id.value=' . $product_id . ';">Remove</button>';
             echo '<input type="hidden" name="product_id" value="' . $product_id . '"></td>';
@@ -306,42 +307,61 @@ if ($selected_canteen && $selected_stall) {
         if (isset($_POST['proceed_checkout']) && empty($order_success)) {
             echo '<div class="mt-4">';
             echo '<h5>Checkout</h5>';
-            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;"></div>';
-            echo '<form method="post" enctype="multipart/form-data">';
-            echo '<div class="mb-3">';
-            echo '<label class="form-label">Upload GCash Receipt (portrait image required)</label>';
-            echo '<input type="file" class="form-control" name="receipt_image" accept="image/*" required>';
+            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;cursor:pointer;" onclick="showQrModal(this.src)">';
+            echo '<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">';
+            echo '<div class="modal-dialog modal-dialog-centered">';
+            echo '<div class="modal-content bg-transparent border-0">';
+            echo '<div class="modal-body text-center p-0">';
+            echo '<img id="qrModalImg" src="" alt="QR Code" style="max-width:90vw;max-height:90vh;object-fit:contain;box-shadow:0 0 24px #0008;border-radius:1rem;">';
             echo '</div>';
-            echo '<div class="mb-3">';
-            echo '<label class="form-label">Order Note (optional)</label>';
-            echo '<textarea class="form-control" name="order_note" rows="2" maxlength="255"></textarea>';
             echo '</div>';
-            echo '<button type="submit" name="place_order" class="btn btn-success" disabled id="confirmBtn">I already sent the payment and uploaded the QR code</button>';
-            echo '</form>';
-            echo '<script>
-var receiptInput = document.querySelector("input[name=receipt_image]");
-var confirmBtn = document.getElementById("confirmBtn");
-if(receiptInput && confirmBtn) {
-  receiptInput.addEventListener("change", function(e) {
-    var f = e.target.files[0];
-    if(f){
-      var img = new Image();
-      img.onload = function(){
-        if(img.height <= img.width){
-          alert("Receipt must be portrait.");
-          e.target.value = "";
-          confirmBtn.disabled = true;
-        } else {
-          confirmBtn.disabled = false;
-        }
-      };
-      img.src = URL.createObjectURL(f);
-    }
-  });
-}
-</script>';
+            echo '</div>';
+            echo '</div>';
+            echo '</div>';
+            echo '<script>';
+            echo 'function showQrModal(src) {';
+            echo '  var modal = new bootstrap.Modal(document.getElementById(\'qrModal\'));';
+            echo '  document.getElementById(\'qrModalImg\').src = src;';
+            echo '  modal.show();';
+            echo '}';
+            echo '// Enforce max=5 on all cart quantity inputs';
+            echo 'window.addEventListener(\'DOMContentLoaded\', function() {';
+            echo '  document.querySelectorAll(\'input[type=number][name^=quantities], input[type=number][name=quantity]\').forEach(function(input) {';
+            echo '    input.addEventListener(\'input\', function() {';
+            echo '      if (parseInt(this.value) > 5) this.value = 5;';
+            echo '      if (parseInt(this.value) < 1) this.value = 1;';
+            echo '    });';
+            echo '  });';
+            echo '});';
+            echo '</script>';
             echo '</div>';
         }
     }
 }
+
+// FEEDBACK/NOTIFICATION SYSTEM
+if (!empty($cart_success)): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <?= htmlspecialchars($cart_success) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
+<?php if (!empty($cart_error)): ?>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <?= htmlspecialchars($cart_error) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
+<?php if (!empty($order_success)): ?>
+  <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <?= htmlspecialchars($order_success) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
+<?php if (!empty($order_error)): ?>
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <?= htmlspecialchars($order_error) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+<?php endif; ?>
 ?> 

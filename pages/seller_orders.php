@@ -116,6 +116,48 @@ if ($orders) {
         }
     }
 }
+
+// Auto-void orders not picked up after 3 hours
+$now = new DateTime();
+foreach ($orders as &$order) {
+    if (!in_array($order['status'], ['done','cancelled','void'])) {
+        $created = new DateTime($order['created_at']);
+        $diff = $now->getTimestamp() - $created->getTimestamp();
+        if ($diff > 3*3600) {
+            $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
+            $stmt->execute([$order['orderRef']]);
+            $order['status'] = 'void';
+        }
+    }
+}
+unset($order);
+// Sort orders oldest first
+usort($orders, function($a, $b) { return strtotime($a['created_at']) <=> strtotime($b['created_at']); });
+
+// Handle edit and delete actions (move to top before HTML)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_ref'], $_POST['edit_status'])) {
+    $edit_order_ref = $_POST['edit_order_ref'];
+    $edit_status = $_POST['edit_status'];
+    $stmt = $pdo->prepare("UPDATE orders SET status=? WHERE orderRef=?");
+    if ($stmt->execute([$edit_status, $edit_order_ref])) {
+        $status_success = 'Order updated.';
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    } else {
+        $status_error = 'Failed to update order.';
+    }
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_ref'])) {
+    $delete_order_ref = $_POST['delete_order_ref'];
+    $stmt = $pdo->prepare("DELETE FROM orders WHERE orderRef=?");
+    if ($stmt->execute([$delete_order_ref])) {
+        $status_success = 'Order deleted.';
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    } else {
+        $status_error = 'Failed to delete order.';
+    }
+}
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <div class="container-fluid px-4 pt-4">
@@ -188,6 +230,68 @@ if ($orders) {
                             </form>
                         <?php endif; ?>
                     <?php endif; ?>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info me-1" data-bs-toggle="modal" data-bs-target="#viewOrderModal<?= $order['orderRef'] ?>">View</button>
+                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editOrderModal<?= $order['orderRef'] ?>">Edit</button>
+                    <form method="post" style="display:inline">
+                        <input type="hidden" name="delete_order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this order?')">Delete</button>
+                    </form>
+                    <!-- View Modal -->
+                    <div class="modal fade" id="viewOrderModal<?= $order['orderRef'] ?>" tabindex="-1" aria-labelledby="viewOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="viewOrderModalLabel<?= $order['orderRef'] ?>">Order Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div><strong>Order Ref:</strong> <?= htmlspecialchars($order['orderRef']) ?></div>
+                                    <div><strong>Date:</strong> <?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></div>
+                                    <div><strong>Status:</strong> <?= htmlspecialchars($order['status']) ?></div>
+                                    <div><strong>Buyer:</strong> <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?> (<?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['email']) : '' ?>)</div>
+                                    <div><strong>Items:</strong>
+                                        <ul>
+                                            <?php foreach ($order_items[$order['orderRef']] as $item): ?>
+                                                <li><?= htmlspecialchars($item['product_name']) ?> x <?= $item['quantity'] ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                    <div><strong>Total:</strong> ₱<?= number_format($order['total_price'],2) ?></div>
+                                    <div><strong>Receipt:</strong><br><?php if ($order['receipt_image']): ?><img src="<?= $order['receipt_image'] ?>" alt="Receipt" style="max-width:200px;max-height:200px;object-fit:cover;"><?php else: ?><span class="text-muted">No receipt</span><?php endif; ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Edit Modal (simple, for status only) -->
+                    <div class="modal fade" id="editOrderModal<?= $order['orderRef'] ?>" tabindex="-1" aria-labelledby="editOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editOrderModalLabel<?= $order['orderRef'] ?>">Edit Order</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="post">
+                                        <input type="hidden" name="edit_order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
+                                        <div class="mb-3">
+                                            <label class="form-label">Status</label>
+                                            <select class="form-select" name="edit_status">
+                                                <option value="queue" <?= $order['status']==='queue'?'selected':'' ?>>Queue</option>
+                                                <option value="pending" <?= $order['status']==='pending'?'selected':'' ?>>Pending</option>
+                                                <option value="processing" <?= $order['status']==='processing'?'selected':'' ?>>Processing</option>
+                                                <option value="done" <?= $order['status']==='done'?'selected':'' ?>>Done</option>
+                                                <option value="cancelled" <?= $order['status']==='cancelled'?'selected':'' ?>>Cancelled</option>
+                                                <option value="void" <?= $order['status']==='void'?'selected':'' ?>>Void</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             </tr>
         <?php endforeach; ?>

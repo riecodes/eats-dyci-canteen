@@ -158,11 +158,8 @@ foreach ($stmt->fetchAll() as $row) {
     </div>
   </div>
 
-  <!-- Sales Overview Section -->
-  <div class="dashboard-section-title mt-3 mb-2">Sales Overview</div>
-  <div class="dashboard-table">
-    <div class="p-4 text-center text-muted">(Sales overview chart or summary coming soon...)</div>
-  </div>
+  <!-- Data Visualizations -->
+  <div class="dashboard-section-title mt-3 mb-2">Data Visualizations</div>
   <!-- Data Visualizations -->
   <div class="row mt-4 mb-4">
     <div class="col-md-6 mb-4">
