@@ -77,6 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
         if (move_uploaded_file($_FILES['edit_image']['tmp_name'], $target)) {
             $edit_image_url = $target;
         }
+    } else {
+        // No new image uploaded, fetch current image from DB
+        $img_stmt = $pdo->prepare("SELECT image FROM products WHERE id = ? LIMIT 1");
+        $img_stmt->execute([$edit_id]);
+        $row = $img_stmt->fetch();
+        $edit_image_url = $row ? $row['image'] : null;
     }
     $sql = "UPDATE products SET name=?, description=?, price=?, category_id=?, image=?, stock=? WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")";
     $params = [$edit_name, $edit_description, $edit_price, $edit_category_id, $edit_image_url, $edit_stock, $edit_id];
