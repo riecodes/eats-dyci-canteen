@@ -183,14 +183,6 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
                   </div>
                   <?php if ($user['role'] === 'buyer'): ?>
                     <div class="mb-3">
-                      <label class="form-label">Identification</label>
-                      <select class="form-select" name="edit_identification">
-                        <option value="Student" <?= ($user['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
-                        <option value="Staff" <?= ($user['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
-                        <option value="Teacher" <?= ($user['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
-                      </select>
-                    </div>
-                    <div class="mb-3">
                       <label class="form-label">Department</label>
                       <select class="form-select" name="edit_department">
                         <option value="CPE" <?= ($user['department'] ?? '') === 'CPE' ? 'selected' : '' ?>>CPE</option>

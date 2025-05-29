@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'buyer') 
 }
 $buyer_id = $_SESSION['user_id'];
 // Fetch current buyer info
-$stmt = $pdo->prepare('SELECT name, email FROM users WHERE id = ? AND role = "buyer"');
+$stmt = $pdo->prepare('SELECT name, email, department, position FROM users WHERE id = ? AND role = "buyer"');
 $stmt->execute([$buyer_id]);
 $buyer = $stmt->fetch();
 if (!$buyer) {
@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
+    $department = $_POST['department'] ?? null;
+    $position = $_POST['position'] ?? null;
     if (!$name || !$email) {
         $error = 'Name and email are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -33,11 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
         } else {
             if ($password) {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?');
-                $ok = $stmt->execute([$name, $email, $hash, $buyer_id]);
+                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, password = ?, department = ?, position = ? WHERE id = ?');
+                $ok = $stmt->execute([$name, $email, $hash, $department, $position, $buyer_id]);
             } else {
-                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ? WHERE id = ?');
-                $ok = $stmt->execute([$name, $email, $buyer_id]);
+                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, department = ?, position = ? WHERE id = ?');
+                $ok = $stmt->execute([$name, $email, $department, $position, $buyer_id]);
             }
             if ($ok) {
                 $success = 'Account updated!';
@@ -67,4 +69,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
             <label class="form-label">New Password (leave blank to keep current)</label>
             <input type="password" class="form-control" name="password" autocomplete="new-password">
         </div>
+        <div class="mb-3">
+            <label class="form-label">Identification</label>
+            <select class="form-select" name="position" required>
+                <option value="Student" <?= ($buyer['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
+                <option value="Staff" <?= ($buyer['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
+                <option value="Teacher" <?= ($buyer['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Department</label>
+            <select class="form-select" name="department" required>
+                <option value="CPE" <?= ($buyer['department'] ?? '') === 'CPE' ? 'selected' : '' ?>>CPE</option>
+                <option value="CS" <?= ($buyer['department'] ?? '') === 'CS' ? 'selected' : '' ?>>CS</option>
+                <option value="IT" <?= ($buyer['department'] ?? '') === 'IT' ? 'selected' : '' ?>>IT</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Account</button>
+    </form>
+</div>
  
