@@ -15,15 +15,30 @@ if (!isset($_SESSION['cart'])) {
 }
 $cart = &$_SESSION['cart'];
 
+// Get selected canteen and stall from GET
+$selected_canteen = isset($_GET['canteen_id']) ? intval($_GET['canteen_id']) : 0;
+$selected_stall = isset($_GET['stall_id']) ? intval($_GET['stall_id']) : 0;
+
+// If stall changes, clear cart
+if (isset($_GET['stall_id'])) {
+    if (!isset($_SESSION['last_stall_id'])) {
+        $_SESSION['last_stall_id'] = $selected_stall;
+    } elseif ($_SESSION['last_stall_id'] != $selected_stall) {
+        $_SESSION['cart'] = [];
+        $cart = &$_SESSION['cart'];
+        $cart_success = 'Cart cleared: You changed stall.';
+        $_SESSION['last_stall_id'] = $selected_stall;
+    }
+}
+
 // Handle add to cart
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
     $product_id = intval($_POST['product_id']);
     $qty = max(1, intval($_POST['quantity']));
-    // Fetch product to check stock
     $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
     $stmt->execute([$product_id]);
     $product = $stmt->fetch();
-    if ($product && $qty <= $product['stock']) {
+    if ($product && $qty <= $product['stock'] && $product['stall_id'] == $selected_stall) {
         if (isset($cart[$product_id])) {
             $cart[$product_id] += $qty;
             if ($cart[$product_id] > $product['stock']) {
@@ -64,10 +79,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_from_cart'])) 
 // Fetch all canteens
 $canteens = $pdo->query('SELECT * FROM canteens ORDER BY name ASC')->fetchAll();
 
-// Get selected canteen and stall from GET
-$selected_canteen = isset($_GET['canteen_id']) ? intval($_GET['canteen_id']) : 0;
-$selected_stall = isset($_GET['stall_id']) ? intval($_GET['stall_id']) : 0;
-
 // Fetch stalls for selected canteen
 $stalls = [];
 if ($selected_canteen) {
@@ -90,52 +101,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     if (empty($cart)) {
         $order_error = 'Your cart is empty.';
     } else {
-        // 1. Check order limits (e.g., max 3 orders per day)
-        $user_id = $_SESSION['user_id'];
-        $today = date('Y-m-d');
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?');
-        $stmt->execute([$user_id, $today]);
-        $orders_today = $stmt->fetchColumn();
-        $max_orders_per_day = 3; // Change as needed
-        if ($orders_today >= $max_orders_per_day) {
-            $order_error = 'You have reached the maximum number of orders for today.';
-        } else {
-            // 2. Check stock for each item
-            $valid = true;
-            $cart_products = [];
-            foreach ($cart as $product_id => $qty) {
-                $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
-                $stmt->execute([$product_id]);
-                $prod = $stmt->fetch();
-                if (!$prod || $qty > $prod['stock']) {
-                    $valid = false;
-                    $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
-                    break;
-                }
-                $cart_products[$product_id] = $prod;
+        $valid = true;
+        foreach ($cart as $product_id => $qty) {
+            $stmt = $pdo->prepare('SELECT stall_id FROM products WHERE id = ?');
+            $stmt->execute([$product_id]);
+            $prod_stall_id = $stmt->fetchColumn();
+            if ($prod_stall_id != $selected_stall) {
+                $valid = false;
+                $order_error = 'All items in your cart must be from the same stall.';
+                break;
             }
-            if ($valid) {
-                // 3. Insert order
-                $orderRef = uniqid('ORD');
-                $total_price = 0;
+        }
+        if (!$valid) {
+            // Do not proceed
+        } else {
+            // 1. Check order limits (e.g., max 3 orders per day)
+            $user_id = $_SESSION['user_id'];
+            $today = date('Y-m-d');
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?');
+            $stmt->execute([$user_id, $today]);
+            $orders_today = $stmt->fetchColumn();
+            $max_orders_per_day = 3; // Change as needed
+            if ($orders_today >= $max_orders_per_day) {
+                $order_error = 'You have reached the maximum number of orders for today.';
+            } else {
+                // 2. Check stock for each item
+                $cart_products = [];
                 foreach ($cart as $product_id => $qty) {
-                    $total_price += $cart_products[$product_id]['price'] * $qty;
-                }
-                $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price) VALUES (?, ?, ?)');
-                if ($stmt->execute([$orderRef, $user_id, $total_price])) {
-                    // 4. Insert order items and update stock
-                    foreach ($cart as $product_id => $qty) {
-                        $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
-                        $stmt->execute([$orderRef, $product_id, $qty]);
-                        // Update stock
-                        $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
-                        $stmt->execute([$qty, $product_id]);
+                    $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+                    $stmt->execute([$product_id]);
+                    $prod = $stmt->fetch();
+                    if (!$prod || $qty > $prod['stock']) {
+                        $valid = false;
+                        $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
+                        break;
                     }
-                    // 5. Clear cart
-                    $_SESSION['cart'] = [];
-                    $order_success = 'Order placed successfully!';
-                } else {
-                    $order_error = 'Failed to place order.';
+                    $cart_products[$product_id] = $prod;
+                }
+                if ($valid) {
+                    // 3. Insert order
+                    $orderRef = uniqid('ORD');
+                    $total_price = 0;
+                    foreach ($cart as $product_id => $qty) {
+                        $total_price += $cart_products[$product_id]['price'] * $qty;
+                    }
+                    $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price) VALUES (?, ?, ?)');
+                    if ($stmt->execute([$orderRef, $user_id, $total_price])) {
+                        // 4. Insert order items and update stock
+                        foreach ($cart as $product_id => $qty) {
+                            $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
+                            $stmt->execute([$orderRef, $product_id, $qty]);
+                            // Update stock
+                            $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+                            $stmt->execute([$qty, $product_id]);
+                        }
+                        // 5. Clear cart
+                        $_SESSION['cart'] = [];
+                        $order_success = 'Order placed successfully!';
+                    } else {
+                        $order_error = 'Failed to place order.';
+                    }
                 }
             }
         }
@@ -157,59 +182,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     <h2 class="mb-4">Place an Order</h2>
     <?php if (!empty($cart_success)): ?><div class="alert alert-success"><?= $cart_success ?></div><?php endif; ?>
     <?php if (!empty($cart_error)): ?><div class="alert alert-danger"><?= $cart_error ?></div><?php endif; ?>
-    <form method="get" action="">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="mb-3">
-                <label for="canteenSelect" class="form-label">Select Canteen</label>
-                <select id="canteenSelect" name="canteen_id" class="form-select" onchange="this.form.submit()">
-                    <option value="">-- Select Canteen --</option>
-                    <?php foreach ($canteens as $canteen): ?>
-                        <option value="<?= $canteen['id'] ?>" <?= $selected_canteen == $canteen['id'] ? 'selected' : '' ?>><?= htmlspecialchars($canteen['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
+    <form method="get" action="index.php">
+        <input type="hidden" name="page" value="buyer_order">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="canteenSelect" class="form-label">Select Canteen</label>
+                    <select id="canteenSelect" name="canteen_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Select Canteen --</option>
+                        <?php foreach ($canteens as $canteen): ?>
+                            <option value="<?= $canteen['id'] ?>" <?= $selected_canteen == $canteen['id'] ? 'selected' : '' ?>><?= htmlspecialchars($canteen['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="stallSelect" class="form-label">Select Stall</label>
+                    <select id="stallSelect" name="stall_id" class="form-select" onchange="this.form.submit()" <?= $selected_canteen ? '' : 'disabled' ?>>
+                        <option value="">-- Select Stall --</option>
+                        <?php foreach ($stalls as $stall): ?>
+                            <option value="<?= $stall['id'] ?>" <?= $selected_stall == $stall['id'] ? 'selected' : '' ?>><?= htmlspecialchars($stall['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
-            <div class="mb-3">
-                <label for="stallSelect" class="form-label">Select Stall</label>
-                <select id="stallSelect" name="stall_id" class="form-select" onchange="this.form.submit()" <?= $selected_canteen ? '' : 'disabled' ?>>
-                    <option value="">-- Select Stall --</option>
-                    <?php foreach ($stalls as $stall): ?>
-                        <option value="<?= $stall['id'] ?>" <?= $selected_stall == $stall['id'] ? 'selected' : '' ?>><?= htmlspecialchars($stall['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-        </div>
-        <div class="col-md-8">
-            <div id="productsSection">
-                <h5>Products</h5>
-                <div id="productsList" class="row g-3">
-                    <?php if ($selected_stall && $products): ?>
-                        <?php foreach ($products as $product): ?>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100">
-                                    <img src="<?= htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg') ?>" class="card-img-top" alt="Product Image" style="max-height:150px;object-fit:cover;">
-                                    <div class="card-body">
-                                        <h6 class="card-title mb-1"><?= htmlspecialchars($product['name']) ?></h6>
-                                        <div class="mb-1 text-muted">₱<?= number_format($product['price'],2) ?></div>
-                                        <div class="mb-2 small">Stock: <?= (int)$product['stock'] ?></div>
-                                        <form method="post" class="d-flex align-items-center gap-2">
-                                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                                            <input type="number" class="form-control form-control-sm" name="quantity" min="1" max="<?= (int)$product['stock'] ?>" value="1" style="width:70px;">
-                                            <button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" <?= $product['stock'] < 1 ? 'disabled' : '' ?>>Add</button>
-                                        </form>
+            <div class="col-md-8">
+                <div id="productsSection">
+                    <h5>Products</h5>
+                    <div id="productsList" class="row g-3">
+                        <?php if ($selected_stall && $products): ?>
+                            <?php foreach ($products as $product): ?>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card h-100">
+                                        <img src="<?= htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg') ?>" class="card-img-top" alt="Product Image" style="max-height:150px;object-fit:cover;">
+                                        <div class="card-body">
+                                            <h6 class="card-title mb-1"><?= htmlspecialchars($product['name']) ?></h6>
+                                            <div class="mb-1 text-muted">₱<?= number_format($product['price'],2) ?></div>
+                                            <div class="mb-2 small">Stock: <?= (int)$product['stock'] ?></div>
+                                            <form method="post" class="d-flex align-items-center gap-2">
+                                                <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                                                <input type="number" class="form-control form-control-sm" name="quantity" min="1" max="<?= (int)$product['stock'] ?>" value="1" style="width:70px;">
+                                                <button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" <?= $product['stock'] < 1 ? 'disabled' : '' ?>>Add</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php elseif ($selected_stall): ?>
-                        <div class="col-12"><div class="alert alert-info">No products found for this stall.</div></div>
-                    <?php else: ?>
-                        <div class="col-12"><div class="alert alert-secondary">Select a canteen and stall to view products.</div></div>
-                    <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php elseif ($selected_stall): ?>
+                            <div class="col-12"><div class="alert alert-info">No products found for this stall.</div></div>
+                        <?php else: ?>
+                            <div class="col-12"><div class="alert alert-secondary">Select a canteen and stall to view products.</div></div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     </form>
     <hr>
     <div class="row">
