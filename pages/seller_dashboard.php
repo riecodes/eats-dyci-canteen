@@ -24,8 +24,8 @@ $total_products = $stmt->fetchColumn();
 $stmt = $pdo->prepare("SELECT COUNT(DISTINCT order_id) FROM order_items WHERE product_id IN (SELECT id FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . "))");
 $stmt->execute();
 $total_orders = $stmt->fetchColumn();
-// Total sales (sum of order_items * price)
-$stmt = $pdo->prepare("SELECT SUM(oi.quantity * p.price) FROM order_items oi JOIN products p ON oi.product_id=p.id WHERE p.stall_id IN (" . implode(',', $stall_ids) . ")");
+// Total sales (sum of order_items * price) for completed orders only
+$stmt = $pdo->prepare("SELECT SUM(oi.quantity * p.price) FROM order_items oi JOIN products p ON oi.product_id=p.id JOIN orders o ON oi.order_id=o.orderRef WHERE p.stall_id IN (" . implode(',', $stall_ids) . ") AND o.status IN ('done','completed')");
 $stmt->execute();
 $total_sales = $stmt->fetchColumn();
 if ($total_sales === null) $total_sales = 0;

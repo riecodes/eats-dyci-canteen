@@ -134,7 +134,13 @@ $products = $prod_stmt->fetchAll();
                 <td><?= htmlspecialchars($prod['description']) ?></td>
                 <td>₱<?= number_format($prod['price'],2) ?></td>
                 <td><?= htmlspecialchars($prod['category_id']) ?></td>
-                <td><?= htmlspecialchars($prod['stock']) ?></td>
+                <td><?= htmlspecialchars($prod['stock']) ?>
+<?php if ($prod['stock'] == 0): ?>
+  <span class="badge bg-danger ms-2">No Stock</span>
+<?php elseif ($prod['stock'] <= 5): ?>
+  <span class="badge bg-warning text-dark ms-2">Low Stock</span>
+<?php endif; ?>
+</td>
                 <td><?php if ($prod['image']): ?><img src="<?= $prod['image'] ?>" alt="" style="max-width:60px;max-height:60px;object-fit:cover;"/><?php endif; ?></td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editProductModal<?= $prod['id'] ?>">Edit</button>
