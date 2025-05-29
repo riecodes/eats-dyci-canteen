@@ -166,6 +166,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         }
     }
 }
+
+// Show canteens as cards at the top
+if (!$selected_canteen) {
+    echo '<div class="row g-4 mb-4">';
+    foreach ($canteens as $canteen) {
+        echo '<div class="col-md-4">';
+        echo '<div class="card h-100 shadow-sm">';
+        $img = htmlspecialchars($canteen['image'] ?? '../assets/imgs/canteen-default.jpg');
+        echo '<img src="' . $img . '" class="card-img-top" alt="Canteen Image" style="max-height:200px;object-fit:cover;">';
+        echo '<div class="card-body">';
+        echo '<h5 class="card-title">' . htmlspecialchars($canteen['name']) . '</h5>';
+        echo '<form method="get" action="index.php">';
+        echo '<input type="hidden" name="page" value="buyer_order">';
+        echo '<input type="hidden" name="canteen_id" value="' . $canteen['id'] . '">';
+        echo '<button type="submit" class="btn btn-primary w-100">Select</button>';
+        echo '</form>';
+        echo '</div></div></div>';
+    }
+    echo '</div>';
+    // Stop here if no canteen selected
+    return;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
