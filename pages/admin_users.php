@@ -57,10 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
     $edit_name = trim($_POST['edit_name'] ?? '');
     $edit_email = trim($_POST['edit_email'] ?? '');
     $edit_role = $_POST['edit_role'] ?? '';
-<<<<<<< HEAD
-=======
     $edit_password = $_POST['edit_password'] ?? '';
->>>>>>> master
     if (!$edit_name || !$edit_email || !$edit_role) {
         $edit_error = 'All fields are required.';
     } elseif (!filter_var($edit_email, FILTER_VALIDATE_EMAIL)) {
@@ -73,13 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
         if ($stmt->fetch()) {
             $edit_error = 'Email already in use by another user.';
         } else {
-<<<<<<< HEAD
-            $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?');
-            if ($stmt->execute([$edit_name, $edit_email, $edit_role, $edit_id])) {
-                $edit_success = 'User updated successfully!';
-            } else {
-                $edit_error = 'Failed to update user.';
-=======
             if ($edit_password) {
                 $hash = password_hash($edit_password, PASSWORD_DEFAULT);
                 $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, role = ?, password = ? WHERE id = ?');
@@ -95,138 +85,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_user_id'])) {
                 } else {
                     $edit_error = 'Failed to update user.';
                 }
->>>>>>> master
             }
         }
     }
 }
 $stmt = $pdo->query('SELECT id, name, email, role FROM users ORDER BY id ASC');
 $users = $stmt->fetchAll();
-<<<<<<< HEAD
-?>
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>User Management</h2>
-        <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">Add User</a>
-    </div>
-    <?php if ($add_success): ?>
-        <div class="alert alert-success"><?php echo $add_success; ?></div>
-    <?php elseif ($add_error): ?>
-        <div class="alert alert-danger"><?php echo $add_error; ?></div>
-    <?php endif; ?>
-    <?php if ($delete_success): ?>
-        <div class="alert alert-success"><?php echo $delete_success; ?></div>
-    <?php elseif ($delete_error): ?>
-        <div class="alert alert-danger"><?php echo $delete_error; ?></div>
-    <?php endif; ?>
-    <?php if ($edit_success): ?>
-        <div class="alert alert-success"><?php echo $edit_success; ?></div>
-    <?php elseif ($edit_error): ?>
-        <div class="alert alert-danger"><?php echo $edit_error; ?></div>
-    <?php endif; ?>
-    <table class="table table-bordered table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($users as $user): ?>
-            <tr>
-                <td><?php echo $user['id']; ?></td>
-                <td><?php echo htmlspecialchars($user['name']); ?></td>
-                <td><?php echo htmlspecialchars($user['email']); ?></td>
-                <td><?php echo htmlspecialchars($user['role']); ?></td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editUserModal<?php echo $user['id']; ?>" <?php if ($user['id'] == $_SESSION['user_id']) echo 'disabled'; ?>>Edit</button>
-                    <form method="post" style="display:inline">
-                        <input type="hidden" name="delete_user_id" value="<?php echo $user['id']; ?>">
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this user?')" <?php if ($user['id'] == $_SESSION['user_id']) echo 'disabled'; ?>>Delete</button>
-                    </form>
-                    <!-- Edit User Modal -->
-                    <div class="modal fade" id="editUserModal<?php echo $user['id']; ?>" tabindex="-1" aria-labelledby="editUserModalLabel<?php echo $user['id']; ?>" aria-hidden="true">
-                      <div class="modal-dialog">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <h5 class="modal-title" id="editUserModalLabel<?php echo $user['id']; ?>">Edit User</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-                          <div class="modal-body">
-                            <form method="post" autocomplete="off">
-                                <input type="hidden" name="edit_user_id" value="<?php echo $user['id']; ?>">
-                                <div class="mb-3">
-                                    <label class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" name="edit_name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Email address</label>
-                                    <input type="email" class="form-control" name="edit_email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Role</label>
-                                    <select class="form-select" name="edit_role" required>
-                                        <option value="seller" <?php if ($user['role'] === 'seller') echo 'selected'; ?>>Seller</option>
-                                        <option value="buyer" <?php if ($user['role'] === 'buyer') echo 'selected'; ?>>Buyer</option>
-                                        <option value="admin" <?php if ($user['role'] === 'admin') echo 'selected'; ?>>Admin</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-primary w-100">Save Changes</button>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
-    <!-- Add User Modal -->
-    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form method="post" autocomplete="off">
-                <input type="hidden" name="add_user" value="1">
-                <div class="mb-3">
-                    <label for="add_name" class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="add_name" name="name" required>
-                </div>
-                <div class="mb-3">
-                    <label for="add_email" class="form-label">Email address</label>
-                    <input type="email" class="form-control" id="add_email" name="email" required>
-                </div>
-                <div class="mb-3">
-                    <label for="add_role" class="form-label">Role</label>
-                    <select class="form-select" id="add_role" name="role" required>
-                        <option value="">Select role</option>
-                        <option value="seller">Seller</option>
-                        <option value="buyer">Buyer</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="add_password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="add_password" name="password" required>
-                </div>
-                <div class="mb-3">
-                    <label for="add_confirm_password" class="form-label">Confirm Password</label>
-                    <input type="password" class="form-control" id="add_confirm_password" name="confirm_password" required>
-                </div>
-                <button type="submit" class="btn btn-success w-100">Add User</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-=======
 
 // Remove the currently logged-in admin from the user management list and actions
 $admin_id = $_SESSION['user_id'];
@@ -352,5 +216,4 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
       </div>
     </div>
   </div>
->>>>>>> master
 </div> 

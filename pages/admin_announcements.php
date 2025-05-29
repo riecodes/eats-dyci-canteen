@@ -83,38 +83,12 @@ $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DE
   <?php if ($edit_error): ?><div class="alert alert-danger mb-2"><?= $edit_error ?></div><?php endif; ?>
   <?php if ($delete_success): ?><div class="alert alert-success mb-2"><?= $delete_success ?></div><?php endif; ?>
   <?php if ($delete_error): ?><div class="alert alert-danger mb-2"><?= $delete_error ?></div><?php endif; ?>
-  <div class="mb-4">
-    <div class="fw-bold mb-2">Add Announcement</div>
-    <form method="post" enctype="multipart/form-data" class="row g-3">
-      <input type="hidden" name="add_announcement" value="1">
-      <div class="col-md-6">
-        <label class="form-label">Title</label>
-        <input type="text" class="form-control" name="title" required>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Type</label>
-        <select class="form-select" name="type">
-          <option value="info">Info</option>
-          <option value="warning">Warning</option>
-          <option value="promo">Promo</option>
-        </select>
-      </div>
-      <div class="col-12">
-        <label class="form-label">Message</label>
-        <textarea class="form-control" name="message" rows="3" required></textarea>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Image (optional)</label>
-        <input type="file" class="form-control" name="image" accept="image/*">
-      </div>
-      <div class="col-12">
-        <button type="submit" class="btn btn-primary">Add Announcement</button>
-      </div>
-    </form>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="fw-bold">All Announcements</div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">Add Announcement</button>
   </div>
-  <div class="dashboard-section-title mb-2">All Announcements</div>
   <div class="dashboard-table mb-4">
-    <table class="table mb-0 align-middle">
+    <table class="table mb-0">
       <thead>
         <tr>
           <th>Title</th>
@@ -159,16 +133,16 @@ $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DE
                         <input type="text" class="form-control" name="edit_title" value="<?= htmlspecialchars($a['title']) ?>" required>
                       </div>
                       <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="edit_message" rows="3" required><?= htmlspecialchars($a['message']) ?></textarea>
+                      </div>
+                      <div class="mb-3">
                         <label class="form-label">Type</label>
                         <select class="form-select" name="edit_type">
                           <option value="info" <?= $a['type'] === 'info' ? 'selected' : '' ?>>Info</option>
                           <option value="warning" <?= $a['type'] === 'warning' ? 'selected' : '' ?>>Warning</option>
                           <option value="promo" <?= $a['type'] === 'promo' ? 'selected' : '' ?>>Promo</option>
                         </select>
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label">Message</label>
-                        <textarea class="form-control" name="edit_message" rows="3" required><?= htmlspecialchars($a['message']) ?></textarea>
                       </div>
                       <div class="mb-3">
                         <label class="form-label">Image (optional)</label>
@@ -189,5 +163,42 @@ $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DE
         <?php endforeach; ?>
       </tbody>
     </table>
+  </div>
+  <!-- Add Announcement Modal -->
+  <div class="modal fade" id="addAnnouncementModal" tabindex="-1" aria-labelledby="addAnnouncementModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addAnnouncementModalLabel">Add Announcement</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="add_announcement" value="1">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input type="text" class="form-control" name="title" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Message</label>
+              <textarea class="form-control" name="message" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Type</label>
+              <select class="form-select" name="type">
+                <option value="info">Info</option>
+                <option value="warning">Warning</option>
+                <option value="promo">Promo</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Image (optional)</label>
+              <input type="file" class="form-control" name="image" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Announcement</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </div> 

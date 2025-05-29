@@ -14,7 +14,6 @@ $add_success = $add_error = $edit_success = $edit_error = $delete_success = $del
 // Add canteen
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_canteen'])) {
     $name = trim($_POST['name'] ?? '');
-    $location = trim($_POST['location'] ?? '');
     $image_url = null;
     if (count($canteens) >= $max_canteens) {
         $add_error = 'Maximum of 3 canteens allowed.';
@@ -30,8 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_canteen'])) {
             }
         }
         if (!$add_error) {
-            $stmt = $pdo->prepare('INSERT INTO canteens (name, location, image) VALUES (?, ?, ?)');
-            if ($stmt->execute([$name, $location, $image_url])) {
+            $stmt = $pdo->prepare('INSERT INTO canteens (name, image) VALUES (?, ?)');
+            if ($stmt->execute([$name, $image_url])) {
                 $add_success = 'Canteen added!';
                 $canteens = $pdo->query('SELECT * FROM canteens ORDER BY id ASC')->fetchAll();
             } else {
@@ -44,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_canteen'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_canteen_id'])) {
     $edit_id = intval($_POST['edit_canteen_id']);
     $edit_name = trim($_POST['edit_name'] ?? '');
-    $edit_location = trim($_POST['edit_location'] ?? '');
     $edit_image_url = $_POST['current_image'] ?? null;
     if (!$edit_name) {
         $edit_error = 'Canteen name is required.';
@@ -58,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_canteen_id'])) {
             }
         }
         if (!$edit_error) {
-            $stmt = $pdo->prepare('UPDATE canteens SET name=?, location=?, image=? WHERE id=?');
-            if ($stmt->execute([$edit_name, $edit_location, $edit_image_url, $edit_id])) {
+            $stmt = $pdo->prepare('UPDATE canteens SET name=?, image=? WHERE id=?');
+            if ($stmt->execute([$edit_name, $edit_image_url, $edit_id])) {
                 $edit_success = 'Canteen updated!';
                 $canteens = $pdo->query('SELECT * FROM canteens ORDER BY id ASC')->fetchAll();
             } else {
@@ -89,37 +87,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_canteen_id']))
   <?php if ($edit_error): ?><div class="alert alert-danger mb-2"><?= $edit_error ?></div><?php endif; ?>
   <?php if ($delete_success): ?><div class="alert alert-success mb-2"><?= $delete_success ?></div><?php endif; ?>
   <?php if ($delete_error): ?><div class="alert alert-danger mb-2"><?= $delete_error ?></div><?php endif; ?>
-  <div class="mb-4">
-    <div class="fw-bold mb-2">Add Canteen</div>
-    <form method="post" enctype="multipart/form-data" class="row g-3">
-      <input type="hidden" name="add_canteen" value="1">
-      <div class="col-md-6">
-        <label class="form-label">Name</label>
-        <input type="text" class="form-control" name="name" required <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Location</label>
-        <input type="text" class="form-control" name="location" <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">Image (optional)</label>
-        <input type="file" class="form-control" name="image" accept="image/*" <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>
-      </div>
-      <div class="col-12">
-        <button type="submit" class="btn btn-primary" <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>Add Canteen</button>
-      </div>
-    </form>
-    <?php if (count($canteens) >= $max_canteens): ?>
-      <div class="alert alert-info mt-2">Maximum of 3 canteens reached. Delete a canteen to add a new one.</div>
-    <?php endif; ?>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="fw-bold">All Canteens</div>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCanteenModal" <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>Add Canteen</button>
   </div>
-  <div class="dashboard-section-title mb-2">All Canteens</div>
   <div class="dashboard-table mb-4">
-    <table class="table mb-0 align-middle">
+    <table class="table mb-0">
       <thead>
         <tr>
           <th>Name</th>
-          <th>Location</th>
           <th>Image</th>
           <th>Actions</th>
         </tr>
@@ -128,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_canteen_id']))
         <?php foreach ($canteens as $c): ?>
         <tr>
           <td><?= htmlspecialchars($c['name']) ?></td>
-          <td><?= htmlspecialchars($c['location']) ?></td>
           <td><?php if ($c['image']): ?><img src="<?= htmlspecialchars($c['image']) ?>" alt="Image" style="max-width:80px;max-height:80px;object-fit:cover;"/><?php endif; ?></td>
           <td>
             <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editCanteenModal<?= $c['id'] ?>">Edit</button>
@@ -152,10 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_canteen_id']))
                         <input type="text" class="form-control" name="edit_name" value="<?= htmlspecialchars($c['name']) ?>" required>
                       </div>
                       <div class="mb-3">
-                        <label class="form-label">Location</label>
-                        <input type="text" class="form-control" name="edit_location" value="<?= htmlspecialchars($c['location']) ?>">
-                      </div>
-                      <div class="mb-3">
                         <label class="form-label">Image (optional)</label>
                         <?php if ($c['image']): ?><img src="<?= htmlspecialchars($c['image']) ?>" alt="Image" style="max-width:80px;max-height:80px;display:block;margin-bottom:5px;object-fit:cover;"/><?php endif; ?>
                         <input type="file" class="form-control" name="edit_image" accept="image/*">
@@ -172,5 +143,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_canteen_id']))
         <?php endforeach; ?>
       </tbody>
     </table>
+  </div>
+  <!-- Add Canteen Modal -->
+  <div class="modal fade" id="addCanteenModal" tabindex="-1" aria-labelledby="addCanteenModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addCanteenModalLabel">Add Canteen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="add_canteen" value="1">
+            <div class="mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" name="name" required <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Image (optional)</label>
+              <input type="file" class="form-control" name="image" accept="image/*" <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>
+            </div>
+            <button type="submit" class="btn btn-primary" <?= count($canteens) >= $max_canteens ? 'disabled' : '' ?>>Add Canteen</button>
+          </form>
+          <?php if (count($canteens) >= $max_canteens): ?>
+            <div class="alert alert-info mt-2">Maximum of 3 canteens reached. Delete a canteen to add a new one.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
   </div>
 </div> 

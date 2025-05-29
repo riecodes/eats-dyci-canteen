@@ -4,16 +4,11 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'buyer') 
     return;
 }
 require_once __DIR__ . '/../includes/db.php';
-<<<<<<< HEAD
-=======
-require_once '../includes/upload.php';
->>>>>>> master
 
 $buyer_id = $_SESSION['user_id'];
 $upload_success = $upload_error = '';
 
 // Handle receipt upload
-<<<<<<< HEAD
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_FILES['receipt_image'])) {
     $order_ref = $_POST['order_ref'];
     if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
@@ -23,26 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_ref'], $_FILES[
             $stmt = $pdo->prepare("UPDATE orders SET receipt_image=? WHERE orderRef=? AND user_id=?");
             if ($stmt->execute([$target, $order_ref, $buyer_id])) {
                 $upload_success = 'Receipt uploaded.';
-=======
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['upload_receipt'], $_POST['order_ref'])) {
-    $order_ref = $_POST['order_ref'];
-    if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] === UPLOAD_ERR_OK) {
-        list($ok, $result) = secure_image_upload($_FILES['receipt']);
-        if ($ok) {
-            $target = $result;
-            $stmt = $pdo->prepare('UPDATE orders SET receipt_image = ? WHERE orderRef = ? AND user_id = ?');
-            if ($stmt->execute([$target, $order_ref, $buyer_id])) {
-                $upload_success = 'Receipt uploaded!';
->>>>>>> master
             } else {
                 $upload_error = 'Failed to save receipt.';
             }
         } else {
-<<<<<<< HEAD
             $upload_error = 'Failed to upload receipt.';
-=======
-            $upload_error = $result;
->>>>>>> master
         }
     } else {
         $upload_error = 'No file uploaded.';
@@ -81,11 +61,7 @@ $orders = $stmt->fetchAll();
                     <?php elseif (in_array($order['status'], ['queue','pending'])): ?>
                         <form method="post" enctype="multipart/form-data" style="display:inline">
                             <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-<<<<<<< HEAD
                             <input type="file" name="receipt_image" accept="image/*" required>
-=======
-                            <input type="file" name="receipt" accept="image/*" required>
->>>>>>> master
                             <button type="submit" class="btn btn-sm btn-primary">Upload Receipt</button>
                         </form>
                     <?php else: ?>

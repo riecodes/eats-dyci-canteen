@@ -46,12 +46,6 @@ body {
     max-width: 100%;
 }
 
-/* Fix row margins for proper spacing */
-.dashboard-cards.row {
-    margin-left: -0.75rem;
-    margin-right: -0.75rem;
-}
-
 .dashboard-cards [class*="col-"] {
     padding-left: 0.75rem;
     padding-right: 0.75rem;

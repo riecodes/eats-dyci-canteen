@@ -1,10 +1,6 @@
 .topbar {
     width: 100%;
     background: var(--primary-gold);
-<<<<<<< HEAD
-    min-height: 56px;
-=======
->>>>>>> master
     display: flex;
     align-items: center;
     justify-content: space-between;
