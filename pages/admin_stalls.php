@@ -18,14 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_stall'])) {
     $description = trim($_POST['description'] ?? '');
     $user_id = $_POST['user_id'] ?? null;
     $canteen_id = $_POST['canteen_id'] ?? null;
-    $image_url = null;
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $target = '../assets/imgs/stall_' . uniqid() . '.' . $ext;
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $target)) {
-            $image_url = $target;
-        }
-    }
     if (!$name) {
         $add_error = 'Stall name is required.';
     } elseif (!$canteen_id || !in_array($canteen_id, array_column($canteens, 'id'))) {
@@ -48,14 +40,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_stall_id'])) {
     $edit_description = trim($_POST['edit_description'] ?? '');
     $edit_user_id = $_POST['edit_user_id'] ?? null;
     $edit_canteen_id = $_POST['edit_canteen_id'] ?? null;
-    $edit_image_url = $_POST['current_image'] ?? null;
-    if (isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK) {
-        $ext = pathinfo($_FILES['edit_image']['name'], PATHINFO_EXTENSION);
-        $target = '../assets/imgs/stall_' . uniqid() . '.' . $ext;
-        if (move_uploaded_file($_FILES['edit_image']['tmp_name'], $target)) {
-            $edit_image_url = $target;
-        }
-    }
     if (!$edit_name) {
         $edit_error = 'Stall name is required.';
     } elseif (!$edit_canteen_id || !in_array($edit_canteen_id, array_column($canteens, 'id'))) {
@@ -65,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_stall_id'])) {
     } else {
         $stmt = $pdo->prepare('UPDATE stalls SET name = ?, description = ?, seller_id = ?, canteen_id = ? WHERE id = ?');
         if ($stmt->execute([$edit_name, $edit_description, $edit_user_id ?: null, $edit_canteen_id, $edit_id])) {
-            $edit_success = 'Stall updated successfully!';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $edit_error = 'Failed to update stall.';
         }
@@ -82,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_stall_id'])) {
     }
 }
 // Fetch all stalls with owner name and canteen name
-$stmt = $pdo->query('SELECT stalls.id, stalls.name, stalls.description, users.name AS seller_name, stalls.seller_id, stalls.canteen_id, canteens.name AS canteen_name, stalls.image FROM stalls LEFT JOIN users ON stalls.seller_id = users.id LEFT JOIN canteens ON stalls.canteen_id = canteens.id ORDER BY stalls.id ASC');
+$stmt = $pdo->query('SELECT stalls.id, stalls.name, stalls.description, users.name AS seller_name, stalls.seller_id, stalls.canteen_id, canteens.name AS canteen_name FROM stalls LEFT JOIN users ON stalls.seller_id = users.id LEFT JOIN canteens ON stalls.canteen_id = canteens.id ORDER BY stalls.id ASC');
 $stalls = $stmt->fetchAll();
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
@@ -107,7 +92,6 @@ $stalls = $stmt->fetchAll();
           <th>Description</th>
           <th>Canteen</th>
           <th>Owner (Seller)</th>
-          <th>Image</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -119,13 +103,6 @@ $stalls = $stmt->fetchAll();
           <td><?php echo htmlspecialchars($stall['description']); ?></td>
           <td><?php echo htmlspecialchars($stall['canteen_name'] ?? ''); ?></td>
           <td><?php echo htmlspecialchars($stall['seller_name'] ?? 'Unassigned'); ?></td>
-          <td>
-            <?php if (!empty($stall['image'])): ?>
-              <img src="<?= htmlspecialchars($stall['image']) ?>" alt="Stall Image" style="max-width:60px;max-height:60px;object-fit:cover;" />
-            <?php else: ?>
-              <span class="text-muted">No image</span>
-            <?php endif; ?>
-          </td>
           <td>
             <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editStallModal<?php echo $stall['id']; ?>">Edit</button>
             <form method="post" style="display:inline">
@@ -168,14 +145,6 @@ $stalls = $stmt->fetchAll();
                             <option value="<?php echo $seller['id']; ?>" <?php if ($stall['seller_id'] == $seller['id']) echo 'selected'; ?>><?php echo htmlspecialchars($seller['name']); ?></option>
                           <?php endforeach; ?>
                         </select>
-                      </div>
-                      <div class="mb-3">
-                        <label class="form-label">Image (optional)</label>
-                        <input type="file" class="form-control" name="edit_image" accept="image/*">
-                        <?php if (!empty($stall['image'])): ?>
-                          <img src="<?= htmlspecialchars($stall['image']) ?>" alt="Current Image" style="max-width:60px;max-height:60px;object-fit:cover;margin-top:5px;" />
-                        <?php endif; ?>
-                        <input type="hidden" name="current_image" value="<?= htmlspecialchars($stall['image'] ?? '') ?>">
                       </div>
                       <button type="submit" class="btn btn-primary">Save Changes</button>
                     </form>
@@ -225,10 +194,6 @@ $stalls = $stmt->fetchAll();
                   <option value="<?php echo $seller['id']; ?>"><?php echo htmlspecialchars($seller['name']); ?></option>
                 <?php endforeach; ?>
               </select>
-            </div>
-            <div class="mb-3">
-              <label for="add_stall_image" class="form-label">Image (optional)</label>
-              <input type="file" class="form-control" id="add_stall_image" name="image" accept="image/*">
             </div>
             <button type="submit" class="btn btn-primary">Add Stall</button>
           </form>
