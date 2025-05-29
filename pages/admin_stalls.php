@@ -27,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_stall'])) {
     } else {
         $stmt = $pdo->prepare('INSERT INTO stalls (name, description, seller_id, canteen_id) VALUES (?, ?, ?, ?)');
         if ($stmt->execute([$name, $description, $user_id ?: null, $canteen_id])) {
-            $add_success = 'Stall added successfully!';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $add_error = 'Failed to add stall.';
         }
@@ -48,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_stall_id'])) {
     } else {
         $stmt = $pdo->prepare('UPDATE stalls SET name = ?, description = ?, seller_id = ?, canteen_id = ? WHERE id = ?');
         if ($stmt->execute([$edit_name, $edit_description, $edit_user_id ?: null, $edit_canteen_id, $edit_id])) {
-            $edit_success = 'Stall updated successfully!';
+            header('Location: ' . $_SERVER['REQUEST_URI']);
+            exit;
         } else {
             $edit_error = 'Failed to update stall.';
         }
@@ -58,7 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_stall_id'])) {
     $delete_id = intval($_POST['delete_stall_id']);
     $stmt = $pdo->prepare('DELETE FROM stalls WHERE id = ?');
     if ($stmt->execute([$delete_id])) {
-        $delete_success = 'Stall deleted successfully!';
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
     } else {
         $delete_error = 'Failed to delete stall.';
     }
