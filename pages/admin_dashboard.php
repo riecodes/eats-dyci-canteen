@@ -166,14 +166,14 @@ foreach ($stmt->fetchAll() as $row) {
   <!-- Data Visualizations -->
   <div class="row mt-4 mb-4">
     <div class="col-md-6 mb-4">
-      <div class="card p-3 h-100">
-        <h5 class="mb-3">Orders Per Day (This Month)</h5>
+      <div class="card p-3 h-100" style="border:1.5px solid var(--primary-gold); box-shadow:0 4px 24px var(--shadow-gold);">
+        <h5 class="mb-3 text-secondary">Orders Per Day (This Month)</h5>
         <canvas id="ordersPerDayChart" height="200"></canvas>
       </div>
     </div>
     <div class="col-md-6 mb-4">
-      <div class="card p-3 h-100">
-        <h5 class="mb-3">Product Distribution by Stall</h5>
+      <div class="card p-3 h-100" style="border:1.5px solid var(--secondary-navy); box-shadow:0 4px 24px var(--shadow-navy);">
+        <h5 class="mb-3 text-primary">Product Distribution by Stall</h5>
         <canvas id="prodDistChart" height="200"></canvas>
       </div>
     </div>
@@ -190,10 +190,12 @@ foreach ($stmt->fetchAll() as $row) {
         datasets: [{
           label: 'Orders',
           data: ordersPerDayData,
-          borderColor: '#0dcaf0',
-          backgroundColor: 'rgba(13,202,240,0.1)',
+          borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-gold').trim() || '#d6b243',
+          backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--shadow-gold').trim() || 'rgba(214,178,67,0.15)',
           fill: true,
-          tension: 0.3
+          tension: 0.3,
+          pointBackgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--secondary-navy').trim() || '#170e63',
+          pointBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-gold').trim() || '#d6b243',
         }]
       },
       options: {
@@ -205,15 +207,21 @@ foreach ($stmt->fetchAll() as $row) {
     // Product distribution by stall data
     const prodDistLabels = <?= json_encode(array_keys($prod_dist)) ?>;
     const prodDistData = <?= json_encode(array_values($prod_dist)) ?>;
+    // Use palette for doughnut chart
+    const gold = getComputedStyle(document.documentElement).getPropertyValue('--primary-gold').trim() || '#d6b243';
+    const navy = getComputedStyle(document.documentElement).getPropertyValue('--secondary-navy').trim() || '#170e63';
+    const goldLight = getComputedStyle(document.documentElement).getPropertyValue('--gold-light').trim() || '#dfc055';
+    const goldDark = getComputedStyle(document.documentElement).getPropertyValue('--gold-dark').trim() || '#b8983a';
+    const navyLight = getComputedStyle(document.documentElement).getPropertyValue('--navy-light').trim() || '#2a1f7a';
+    const navyDark = getComputedStyle(document.documentElement).getPropertyValue('--navy-dark').trim() || '#110a4e';
+    const palette = [gold, navy, goldLight, goldDark, navyLight, navyDark, '#fffbe6', '#e6e6fa', '#f4f6fb', '#c4a139'];
     new Chart(document.getElementById('prodDistChart').getContext('2d'), {
       type: 'doughnut',
       data: {
         labels: prodDistLabels,
         datasets: [{
           data: prodDistData,
-          backgroundColor: [
-            '#0dcaf0','#fd7e14','#198754','#6610f2','#ffc107','#dc3545','#6c757d','#20c997','#0d6efd','#e83e8c'
-          ]
+          backgroundColor: palette.slice(0, prodDistLabels.length)
         }]
       },
       options: {
