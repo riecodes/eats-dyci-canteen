@@ -38,6 +38,24 @@ if ($recent_orders) {
         $order_items_count[$row['order_id']] = $row['item_count'];
     }
 }
+
+// Orders per day for current month
+$orders_per_day = [];
+$days_in_month = date('t');
+for ($d = 1; $d <= $days_in_month; $d++) {
+    $orders_per_day[sprintf('%02d', $d)] = 0;
+}
+$stmt = $pdo->query("SELECT DAY(created_at) as day, COUNT(*) as count FROM orders WHERE YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDATE()) GROUP BY day");
+foreach ($stmt->fetchAll() as $row) {
+    $orders_per_day[sprintf('%02d', $row['day'])] = (int)$row['count'];
+}
+
+// Product distribution by stall
+$prod_dist = [];
+$stmt = $pdo->query("SELECT stalls.name, COUNT(products.id) as prod_count FROM stalls LEFT JOIN products ON stalls.id = products.stall_id GROUP BY stalls.id");
+foreach ($stmt->fetchAll() as $row) {
+    $prod_dist[$row['name']] = (int)$row['prod_count'];
+}
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <div class="container-fluid px-4 pt-4">
@@ -145,4 +163,63 @@ if ($recent_orders) {
   <div class="dashboard-table">
     <div class="p-4 text-center text-muted">(Sales overview chart or summary coming soon...)</div>
   </div>
+  <!-- Data Visualizations -->
+  <div class="row mt-4 mb-4">
+    <div class="col-md-6 mb-4">
+      <div class="card p-3 h-100">
+        <h5 class="mb-3">Orders Per Day (This Month)</h5>
+        <canvas id="ordersPerDayChart" height="200"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="card p-3 h-100">
+        <h5 class="mb-3">Product Distribution by Stall</h5>
+        <canvas id="prodDistChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Orders per day data
+    const ordersPerDayLabels = <?= json_encode(array_keys($orders_per_day)) ?>;
+    const ordersPerDayData = <?= json_encode(array_values($orders_per_day)) ?>;
+    new Chart(document.getElementById('ordersPerDayChart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: ordersPerDayLabels,
+        datasets: [{
+          label: 'Orders',
+          data: ordersPerDayData,
+          borderColor: '#0dcaf0',
+          backgroundColor: 'rgba(13,202,240,0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, precision: 0 } }
+      }
+    });
+    // Product distribution by stall data
+    const prodDistLabels = <?= json_encode(array_keys($prod_dist)) ?>;
+    const prodDistData = <?= json_encode(array_values($prod_dist)) ?>;
+    new Chart(document.getElementById('prodDistChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: prodDistLabels,
+        datasets: [{
+          data: prodDistData,
+          backgroundColor: [
+            '#0dcaf0','#fd7e14','#198754','#6610f2','#ffc107','#dc3545','#6c757d','#20c997','#0d6efd','#e83e8c'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  </script>
 </div>

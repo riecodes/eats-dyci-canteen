@@ -240,6 +240,7 @@ function get_stall($a, $all_stalls) {
                                 <?php else: ?>
                                     <img id="edit_announcement_image_preview_<?= $a['id'] ?>" src="#" alt="Preview" style="display:none;max-width:80px;max-height:80px;margin-bottom:5px;">
                                 <?php endif; ?>
+                                <input type="hidden" name="current_image" value="<?= htmlspecialchars($a['image']) ?>">
                             </div>
                             <button type="submit" class="btn btn-primary">Save Changes</button>
                         </form>

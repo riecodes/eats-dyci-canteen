@@ -187,13 +187,13 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Role</label>
-                    <select class="form-select" name="edit_role" required>
+                    <select class="form-select edit-role-select" name="edit_role" required>
                       <option value="seller" <?= $user['role'] === 'seller' ? 'selected' : '' ?>>Seller</option>
                       <option value="buyer" <?= $user['role'] === 'buyer' ? 'selected' : '' ?>>Buyer</option>
                     </select>
                   </div>
                   <?php if ($user['role'] === 'buyer'): ?>
-                    <div class="mb-3">
+                    <div class="mb-3 edit-buyer-extra">
                       <label class="form-label">Department</label>
                       <select class="form-select" name="edit_department">
                         <option value="CPE" <?= ($user['department'] ?? '') === 'CPE' ? 'selected' : '' ?>>CPE</option>
@@ -201,12 +201,29 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
                         <option value="IT" <?= ($user['department'] ?? '') === 'IT' ? 'selected' : '' ?>>IT</option>
                       </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-3 edit-buyer-extra">
                       <label class="form-label">Position</label>
                       <select class="form-select" name="edit_position">
                         <option value="Student" <?= ($user['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
                         <option value="Staff" <?= ($user['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
                         <option value="Teacher" <?= ($user['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
+                      </select>
+                    </div>
+                  <?php else: ?>
+                    <div class="mb-3 edit-buyer-extra" style="display:none;">
+                      <label class="form-label">Department</label>
+                      <select class="form-select" name="edit_department">
+                        <option value="CPE">CPE</option>
+                        <option value="CS">CS</option>
+                        <option value="IT">IT</option>
+                      </select>
+                    </div>
+                    <div class="mb-3 edit-buyer-extra" style="display:none;">
+                      <label class="form-label">Position</label>
+                      <select class="form-select" name="edit_position">
+                        <option value="Student">Student</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Teacher">Teacher</option>
                       </select>
                     </div>
                   <?php endif; ?>
@@ -289,4 +306,23 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
       </div>
     </div>
   </div>
-</div> 
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.edit-role-select').forEach(function(select) {
+    select.addEventListener('change', function() {
+      var modal = select.closest('.modal');
+      var show = select.value === 'buyer';
+      modal.querySelectorAll('.edit-buyer-extra').forEach(function(el) {
+        el.style.display = show ? '' : 'none';
+      });
+    });
+    // Trigger on load
+    var modal = select.closest('.modal');
+    var show = select.value === 'buyer';
+    modal.querySelectorAll('.edit-buyer-extra').forEach(function(el) {
+      el.style.display = show ? '' : 'none';
+    });
+  });
+});
+</script> 
