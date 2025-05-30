@@ -62,8 +62,6 @@ EATS-DYCI-CANTEEN PHP PORT PLAN (based on revision.txt & README.md)
 - Core setup, authentication, user/stall management, and UI/UX foundation are in place.
 - Major missing areas: product/order/payment flow, seller/buyer features, announcements, analytics, file uploads, and some security/backup features.
 - Next steps: Prioritize implementation of seller and buyer features, order/payment flow, and announcement system.
-<<<<<<< HEAD
-=======
 
 **Note:**
 - Never use static data for canteen, stall, or product selection. Always use dynamic data from the database. Order placement flow should be a dynamic single page.
@@ -73,4 +71,3 @@ EATS-DYCI-CANTEEN PHP PORT PLAN (based on revision.txt & README.md)
 - Added buyer order tracking and receipt upload (buyer_orders.php).
 - Integrated seller-side order management: view orders, verify receipts, approve/decline, and mark as done (seller_orders.php).
 - All logic is pure PHP, single-page, no AJAX.
->>>>>>> master
