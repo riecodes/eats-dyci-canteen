@@ -160,18 +160,17 @@ foreach ($stmt->fetchAll() as $row) {
 
   <!-- Data Visualizations -->
   <div class="dashboard-section-title mt-3 mb-2">Data Visualizations</div>
-  <!-- Data Visualizations -->
   <div class="row mt-4 mb-4">
     <div class="col-md-6 mb-4">
-      <div class="card p-3 h-100" style="border:1.5px solid var(--primary-gold); box-shadow:0 4px 24px var(--shadow-gold);">
-        <h5 class="mb-3 text-secondary">Orders Per Day (This Month)</h5>
-        <canvas id="ordersPerDayChart" height="200"></canvas>
+      <div style="background:#fff; border-radius:1rem; padding:1.2rem; margin-bottom:1.2rem; border:1px solid #f0f0f0;">
+        <div style="font-size:1rem; color:#888; font-weight:500; margin-bottom:0.7rem;">Orders Per Day (This Month)</div>
+        <canvas id="ordersPerDayChart" height="180"></canvas>
       </div>
     </div>
     <div class="col-md-6 mb-4">
-      <div class="card p-3 h-100" style="border:1.5px solid var(--secondary-navy); box-shadow:0 4px 24px var(--shadow-navy);">
-        <h5 class="mb-3 text-primary">Product Distribution by Stall</h5>
-        <canvas id="prodDistChart" height="200"></canvas>
+      <div style="background:#fff; border-radius:1rem; padding:1.2rem; margin-bottom:1.2rem; border:1px solid #f0f0f0;">
+        <div style="font-size:1rem; color:#888; font-weight:500; margin-bottom:0.7rem;">Product Distribution by Stall</div>
+        <canvas id="prodDistChart" height="180"></canvas>
       </div>
     </div>
   </div>
