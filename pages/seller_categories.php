@@ -24,12 +24,11 @@ $add_success = $add_error = $edit_success = $edit_error = $delete_success = $del
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
-    $stall_id = $_POST['stall_id'] ?? null;
-    if (!$name || !$stall_id) {
-        $add_error = 'Name and stall are required.';
+    if (!$name) {
+        $add_error = 'Name is required.';
     } else {
-        $stmt = $pdo->prepare("INSERT INTO categories (name, description, stall_id) VALUES (?, ?, ?)");
-        if ($stmt->execute([$name, $description, $stall_id])) {
+        $stmt = $pdo->prepare("INSERT INTO categories (name, description) VALUES (?, ?)");
+        if ($stmt->execute([$name, $description])) {
             header('Location: ' . $_SERVER['REQUEST_URI']);
             exit;
         } else {
@@ -40,12 +39,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_category'])) {
 // Delete category
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_category_id'])) {
     $del_id = $_POST['delete_category_id'];
-    $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ? AND stall_id IN (" . implode(',', $stall_ids) . ")");
+    $stmt = $pdo->prepare("DELETE FROM categories WHERE id = ?");
     if ($stmt->execute([$del_id])) {
+        $_SESSION['delete_success'] = 'Category deleted successfully!';
+        header('Location: ' . $_SERVER['REQUEST_URI']);
+        exit;
+    } else {
+        $_SESSION['delete_error'] = 'Failed to delete category.';
         header('Location: ' . $_SERVER['REQUEST_URI']);
         exit;
     }
 }
+// Show feedback after redirect
+if (!empty($_SESSION['delete_success'])) { $delete_success = $_SESSION['delete_success']; unset($_SESSION['delete_success']); }
+if (!empty($_SESSION['delete_error'])) { $delete_error = $_SESSION['delete_error']; unset($_SESSION['delete_error']); }
 // Edit category
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category_id'])) {
     $edit_id = $_POST['edit_category_id'];
@@ -54,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_category_id'])) 
     if (!$edit_name) {
         $edit_error = 'Name is required.';
     } else {
-        $stmt = $pdo->prepare("UPDATE categories SET name=?, description=? WHERE id=? AND stall_id IN (" . implode(',', $stall_ids) . ")");
+        $stmt = $pdo->prepare("UPDATE categories SET name=?, description=? WHERE id=?");
         if ($stmt->execute([$edit_name, $edit_description, $edit_id])) {
             header('Location: ' . $_SERVER['REQUEST_URI']);
             exit;

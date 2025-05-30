@@ -35,12 +35,10 @@ body {
 }
 
 .dashboard-section-title {
-    margin-top: 2.2rem;
-    margin-bottom: 1.1rem;
-    font-size: 1.13rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.35rem;
     color: #170e63;
-    font-weight: 600;
-    letter-spacing: 0;
 }
 
 /* Ensure full width usage */
@@ -55,46 +53,82 @@ body {
 
 .dashboard-card {
     background: #fff;
+    border: 1px solid #eee;
     border-radius: 1rem;
-    border: 1px solid #f0f0f0;
-    box-shadow: none;
-    padding: 1.2rem 1rem;
-    margin-bottom: 1.2rem;
+    box-shadow: 0 4px 24px rgba(23, 14, 99, 0.08);
+    padding: 2rem 1.25rem 1.5rem 1.25rem;
+    margin-bottom: 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: none;
+    transition: box-shadow 0.3s, transform 0.3s;
 }
 
-.dashboard-card .icon {
-    font-size: 1.7rem;
-    color: #bdbdbd;
-    margin-left: 1rem;
-    opacity: 0.7;
-    transition: none;
+.dashboard-card:hover {
+    box-shadow: 0 6px 24px var(--shadow-gold);
+    transform: translateY(-2px) scale(1.03);
+}
+
+.dashboard-card .card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .dashboard-card .label {
-    font-size: 0.93rem;
-    color: #888;
+    font-size: 0.875rem;
+    color: var(--navy-light);
     font-weight: 500;
-    margin-bottom: 0.15rem;
-    text-transform: none;
-    letter-spacing: 0;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .dashboard-card .count {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #170e63;
+    font-size: 2.1rem;
+    font-weight: 700;
+    color: var(--secondary-navy);
     line-height: 1.2;
-    transition: none;
+    transition: color 0.3s, transform 0.3s;
+    animation: popCount 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+
+.dashboard-card:hover .count {
+    color: var(--primary-gold);
+    transform: scale(1.08);
+}
+
+.dashboard-card .icon {
+    font-size: 2.5rem;
+    color: var(--primary-gold);
+    opacity: 0.85;
+    margin-left: 1.5rem;
+    transition: color 0.3s, transform 0.3s;
+    animation: popIcon 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+
+.dashboard-card:hover .icon {
+    color: var(--gold-dark);
+    transform: scale(1.15) rotate(-8deg);
+}
+
+@keyframes popIcon {
+    0% { transform: scale(0.7) rotate(-10deg); opacity: 0; }
+    60% { transform: scale(1.15) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes popCount {
+    0% { transform: scale(0.7); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 /* Table improvements */
 .dashboard-table {
     background: #fff;
-    border: 1px solid #f0f0f0;
+    border: 1px solid #eee;
     border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(23, 14, 99, 0.06);
     margin-bottom: 1.5rem;
@@ -107,17 +141,19 @@ body {
 
 .dashboard-table th,
 .dashboard-table td {
-    font-size: 0.97rem;
-    padding: 0.7rem;
+    vertical-align: middle;
+    font-size: 0.9375rem;
+    padding: 1rem;
 }
 
 .dashboard-table th {
-    background: #fafbfc;
-    color: #444;
+    background: var(--background-white);
+    color: var(--secondary-navy);
     font-weight: 600;
-    border-bottom: 1px solid #f0f0f0;
-    text-transform: none;
-    letter-spacing: 0;
+    border-bottom: 2px solid var(--border-navy);
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
 }
 
 .dashboard-table tbody tr {
@@ -134,12 +170,13 @@ body {
 
 /* Status badges */
 .dashboard-badge {
-    padding: 0.18rem 0.7rem;
-    font-size: 0.85rem;
-    font-weight: 500;
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
     border-radius: 1rem;
-    text-transform: none;
-    letter-spacing: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .dashboard-badge.pending {

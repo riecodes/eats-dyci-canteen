@@ -98,6 +98,15 @@ if ($selected_stall) {
 // --- ORDER PLACEMENT LOGIC ---
 $order_success = $order_error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
+    $user_id = $_SESSION['user_id'];
+    // Check if user exists
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM users WHERE id = ?');
+    $stmt->execute([$user_id]);
+    if ($stmt->fetchColumn() == 0) {
+        session_destroy();
+        echo '<div class="alert alert-danger">Your account no longer exists. Please contact the admin.</div>';
+        return;
+    }
     if (empty($cart)) {
         $order_error = 'Your cart is empty.';
     } else {
@@ -114,33 +123,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         }
         if (!$valid) {
             // Do not proceed
+    } else {
+        // 1. Check order limits (e.g., max 3 orders per day)
+        $today = date('Y-m-d');
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?');
+        $stmt->execute([$user_id, $today]);
+        $orders_today = $stmt->fetchColumn();
+        $max_orders_per_day = 3; // Change as needed
+        if ($orders_today >= $max_orders_per_day) {
+            $order_error = 'You have reached the maximum number of orders for today.';
         } else {
-            // 1. Check order limits (e.g., max 3 orders per day)
-            $user_id = $_SESSION['user_id'];
-            $today = date('Y-m-d');
-            $stmt = $pdo->prepare('SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?');
-            $stmt->execute([$user_id, $today]);
-            $orders_today = $stmt->fetchColumn();
-            $max_orders_per_day = 3; // Change as needed
-            if ($orders_today >= $max_orders_per_day) {
-                $order_error = 'You have reached the maximum number of orders for today.';
-            } else {
-                // 2. Check stock for each item
-                $cart_products = [];
+            // 2. Check stock for each item
+            $cart_products = [];
                 foreach ($cart as $product_id => $qty) {
                     $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
                     $stmt->execute([$product_id]);
-                    $prod = $stmt->fetch();
-                    if (!$prod || $qty > $prod['stock']) {
-                        $valid = false;
-                        $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
-                        break;
-                    }
-                    $cart_products[$product_id] = $prod;
+                $prod = $stmt->fetch();
+                if (!$prod || $qty > $prod['stock']) {
+                    $valid = false;
+                    $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
+                    break;
                 }
+                    $cart_products[$product_id] = $prod;
+            }
                 // 3. Validate receipt image (portrait, file type)
                 $receipt_path = null;
-                if ($valid) {
+            if ($valid) {
                     if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
                         $img_info = getimagesize($_FILES['receipt_image']['tmp_name']);
                         if ($img_info && $img_info[1] > $img_info[0]) { // portrait
@@ -170,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     }
                     $note = trim($_POST['order_note'] ?? '');
                     $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price, receipt_image, note, status) VALUES (?, ?, ?, ?, ?, ?)');
-                    if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'processing'])) {
+                    if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'queue'])) {
                         // 5. Insert order items and update stock
                         foreach ($cart as $product_id => $qty) {
                             $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
@@ -180,28 +188,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                             $stmt->execute([$qty, $product_id]);
                         }
                         // 6. Clear cart
-                        $_SESSION['cart'] = [];
-                        $order_success = 'Order placed successfully!';
-                    } else {
-                        $order_error = 'Failed to place order.';
-                    }
+                    $_SESSION['cart'] = [];
+                    $order_success = 'Order placed successfully!';
+                } else {
+                    $order_error = 'Failed to place order.';
                 }
             }
         }
     }
 }
+}
 
 // Show canteens as cards at the top
 if (!$selected_canteen) {
-    echo '<div class="dashboard-section-title mb-3">Canteens</div>';
+    echo '<div class="dashboard-section-title mb-3"><div class="dashboard-card" style="font-size:1.5rem; font-weight:700; letter-spacing:2px; text-align:center;">CANTEENS</div></div>';
     echo '<div class="row dashboard-cards g-4 mb-4">';
     foreach ($canteens as $canteen) {
         echo '<div class="col-md-4 mb-3">';
         echo '<div class="dashboard-card h-100">';
         $img = htmlspecialchars($canteen['image'] ?? '../assets/imgs/canteen-default.jpg');
-        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Canteen Image" style="aspect-ratio:1/1; width:100%; max-width:180px; object-fit:cover; border-radius:1rem;">';
+        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Canteen Image" style="aspect-ratio:5/4; width:100%; max-width:260px; object-fit:cover; border-radius:1rem; margin:auto; display:block;">';
         echo '<div class="card-body p-0">';
-        echo '<h5 class="card-title mb-2">' . htmlspecialchars($canteen['name']) . '</h5>';
+        echo '<h5 class="card-title mb-2 text-center" style="font-size:1.2rem; font-weight:600;">' . htmlspecialchars($canteen['name']) . '</h5>';
         echo '<form method="get" action="index.php">';
         echo '<input type="hidden" name="page" value="buyer_order">';
         echo '<input type="hidden" name="canteen_id" value="' . $canteen['id'] . '">';
@@ -215,7 +223,7 @@ if (!$selected_canteen) {
 
 // After canteen selection, show all stalls for the selected canteen as cards
 if ($selected_canteen && !$selected_stall) {
-    echo '<div class="dashboard-section-title mb-3">Stalls</div>';
+    echo '<div class="dashboard-section-title mb-3"><div class="dashboard-card" style="font-size:1.5rem; font-weight:700; letter-spacing:2px; text-align:center;">STALLS</div></div>';
     $stmt = $pdo->prepare('SELECT * FROM stalls WHERE canteen_id = ? ORDER BY name ASC');
     $stmt->execute([$selected_canteen]);
     $stalls = $stmt->fetchAll();
@@ -224,10 +232,10 @@ if ($selected_canteen && !$selected_stall) {
         echo '<div class="col-md-4 mb-3">';
         echo '<div class="dashboard-card h-100">';
         $img = htmlspecialchars($stall['image'] ?? '../assets/imgs/stall-default.jpg');
-        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Stall Image" style="aspect-ratio:1/1; width:100%; max-width:180px; object-fit:cover; border-radius:1rem;">';
+        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Stall Image" style="aspect-ratio:5/4; width:100%; max-width:260px; object-fit:cover; border-radius:1rem; margin:auto; display:block;">';
         echo '<div class="card-body p-0">';
-        echo '<h5 class="card-title mb-2">' . htmlspecialchars($stall['name']) . '</h5>';
-        echo '<p class="card-text mb-2">' . htmlspecialchars($stall['description'] ?? '') . '</p>';
+        echo '<h5 class="card-title mb-2 text-center" style="font-size:1.2rem; font-weight:600;">' . htmlspecialchars($stall['name']) . '</h5>';
+        echo '<p class="card-text mb-2 text-center">' . htmlspecialchars($stall['description'] ?? '') . '</p>';
         echo '<form method="get" action="index.php">';
         echo '<input type="hidden" name="page" value="buyer_order">';
         echo '<input type="hidden" name="canteen_id" value="' . $selected_canteen . '">';
@@ -242,30 +250,33 @@ if ($selected_canteen && !$selected_stall) {
 
 // After stall selection, show all products for the selected stall as cards
 if ($selected_canteen && $selected_stall) {
-    echo '<div class="dashboard-section-title mb-3">Products</div>';
+    echo '<div class="dashboard-section-title mb-3"><div class="dashboard-card" style="font-size:1.5rem; font-weight:700; letter-spacing:2px; text-align:center;">PRODUCTS</div></div>';
     $stmt = $pdo->prepare('SELECT * FROM products WHERE stall_id = ? ORDER BY name ASC');
     $stmt->execute([$selected_stall]);
     $products = $stmt->fetchAll();
-    echo '<div class="row dashboard-cards g-4 mb-4">';
+    echo '<div class="dashboard-table mb-4">';
+    echo '<table class="table mb-0">';
+    echo '<thead class="table-light"><tr><th>Image</th><th>Name</th><th>Price</th><th>Stock</th><th>Add to Cart</th></tr></thead><tbody>';
     foreach ($products as $product) {
         if ((int)$product['stock'] <= 0) continue;
-        echo '<div class="col-md-4 mb-3">';
-        echo '<div class="dashboard-card h-100">';
         $img = htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg');
-        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Product Image" style="aspect-ratio:1/1; width:100%; max-width:180px; object-fit:cover; border-radius:1rem;">';
-        echo '<div class="card-body p-0">';
-        echo '<h6 class="card-title mb-1">' . htmlspecialchars($product['name']) . '</h6>';
-        echo '<div class="mb-1 text-muted">₱' . number_format($product['price'],2) . '</div>';
-        echo '<div class="mb-2 small">Stock: ' . (int)$product['stock'] . '</div>';
-        echo '<form method="post" class="d-flex align-items-center gap-2">';
+        echo '<tr>';
+        echo '<td><img src="' . $img . '" alt="Product Image" style="aspect-ratio:5/4; width:70px; height:56px; object-fit:cover; border-radius:0.7rem;"></td>';
+        echo '<td>' . htmlspecialchars($product['name']) . '</td>';
+        echo '<td>₱' . number_format($product['price'],2) . '</td>';
+        echo '<td>' . (int)$product['stock'] . '</td>';
+        echo '<td>';
+        echo '<form method="post" class="d-flex align-items-center gap-2 mb-0">';
         echo '<input type="hidden" name="product_id" value="' . $product['id'] . '">';
         echo '<input type="number" class="form-control form-control-sm" name="quantity" min="1" max="5" value="1" style="width:70px;">';
         $cart_count = array_sum($cart);
         $disabled = ($product['stock'] < 1 || $cart_count >= 5) ? 'disabled' : '';
         echo '<button class="btn btn-outline-primary btn-sm" type="submit" name="add_to_cart" ' . $disabled . '>Add</button>';
         echo '</form>';
-        echo '</div></div></div>';
+        echo '</td>';
+        echo '</tr>';
     }
+    echo '</tbody></table>';
     echo '</div>';
     // Cart and checkout section
     if (!empty($cart)) {
@@ -282,14 +293,14 @@ if ($selected_canteen && $selected_stall) {
         echo '<div class="dashboard-table mb-4">';
         echo '<table class="table mb-0">';
         echo '<thead class="table-light"><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Subtotal</th><th>Action</th></tr></thead><tbody>';
-        $total = 0;
+                                $total = 0;
         foreach ($cart as $product_id => $qty) {
             $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
             $stmt->execute([$product_id]);
-            $prod = $stmt->fetch();
-            if (!$prod) continue;
-            $subtotal = $prod['price'] * $qty;
-            $total += $subtotal;
+                                    $prod = $stmt->fetch();
+                                    if (!$prod) continue;
+                                    $subtotal = $prod['price'] * $qty;
+                                    $total += $subtotal;
             echo '<tr>';
             echo '<td>' . htmlspecialchars($prod['name']) . '</td>';
             echo '<td>₱' . number_format($prod['price'],2) . '</td>';
@@ -314,7 +325,7 @@ if ($selected_canteen && $selected_stall) {
             $seller_qr = $seller['qr_code'] ?? '../assets/imgs/qrcode-placeholder.jpg';
             echo '<div class="mt-4">';
             echo '<h5>Checkout</h5>';
-            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;cursor:pointer;aspect-ratio:1/1;" onclick="showQrModal(this.src)">';
+            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;background:#fff;cursor:pointer;aspect-ratio:1/1;" onclick="showQrModal(this.src)">';
             echo '<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">';
             echo '<div class="modal-dialog modal-dialog-centered">';
             echo '<div class="modal-content bg-transparent border-0">';
@@ -355,29 +366,3 @@ if ($selected_canteen && $selected_stall) {
         }
     }
 }
-
-// FEEDBACK/NOTIFICATION SYSTEM
-if (!empty($cart_success)): ?>
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    <?= htmlspecialchars($cart_success) ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<?php endif; ?>
-<?php if (!empty($cart_error)): ?>
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <?= htmlspecialchars($cart_error) ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<?php endif; ?>
-<?php if (!empty($order_success)): ?>
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-    <?= htmlspecialchars($order_success) ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<?php endif; ?>
-<?php if (!empty($order_error)): ?>
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <?= htmlspecialchars($order_error) ?>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-<?php endif; ?>

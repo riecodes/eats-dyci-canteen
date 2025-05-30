@@ -37,6 +37,16 @@ $stmt = $pdo->prepare("SELECT o.orderRef, o.created_at, o.status, o.total_price 
 ) ORDER BY o.created_at DESC LIMIT 5");
 $stmt->execute();
 $recent_orders = $stmt->fetchAll();
+// Add status map for badge display
+$status_map = [
+    'queue' => 'Queue',
+    'processing' => 'Processing',
+    'processed' => 'Processed',
+    'done' => 'Complete',
+    'cancelled' => 'Cancelled',
+    'void' => 'Void',
+    'pending' => 'Pending',
+];
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <div class="container-fluid px-4 pt-4">
@@ -89,7 +99,9 @@ $recent_orders = $stmt->fetchAll();
           <tr>
             <td><?= htmlspecialchars($order['orderRef']) ?></td>
             <td><?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></td>
-            <td><span class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span></td>
+            <td><span class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?=
+                $status_map[$order['status']] ?? htmlspecialchars($order['status'])
+            ?></span></td>
             <td>₱<?= number_format($order['total_price'],2) ?></td>
           </tr>
           <?php endforeach; ?>

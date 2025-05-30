@@ -173,7 +173,7 @@ $products = $prod_stmt->fetchAll();
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label" for="edit_seller_id_<?= $prod['id'] ?>">Seller</label>
-                                    <select class="form-select" id="edit_seller_id_<?= $prod['id'] ?>" name="edit_seller_id" required>
+                                    <select class="form-select" id="edit_seller_id_<?= $prod['id'] ?>" name="edit_seller_id" required onchange="updateStallDropdown(this.value, 'edit_stall_id_<?= $prod['id'] ?>', <?= $prod['stall_id'] ?>)">
                                         <?php foreach ($sellers as $seller): ?>
                                             <option value="<?= $seller['id'] ?>" <?php if ($prod['seller_id'] == $seller['id']) echo 'selected'; ?>><?= htmlspecialchars($seller['name']) ?></option>
                                         <?php endforeach; ?>
@@ -181,11 +181,7 @@ $products = $prod_stmt->fetchAll();
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label" for="edit_stall_id_<?= $prod['id'] ?>">Stall</label>
-                                    <select class="form-select" id="edit_stall_id_<?= $prod['id'] ?>" name="edit_stall_id" required>
-                                        <?php foreach ($stalls as $stall): ?>
-                                            <option value="<?= $stall['id'] ?>" <?php if ($prod['stall_id'] == $stall['id']) echo 'selected'; ?>><?= htmlspecialchars($stall['name']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <select class="form-select" id="edit_stall_id_<?= $prod['id'] ?>" name="edit_stall_id" required></select>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label" for="edit_stock_<?= $prod['id'] ?>">Stock</label>
@@ -217,7 +213,7 @@ $products = $prod_stmt->fetchAll();
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form method="post" enctype="multipart/form-data" autocomplete="off">
+            <form method="post" enctype="multipart/form-data" autocomplete="off" id="addProductForm">
                 <input type="hidden" name="add_product" value="1">
                 <div class="mb-3">
                     <label class="form-label" for="add_product_name">Name</label>
@@ -242,7 +238,8 @@ $products = $prod_stmt->fetchAll();
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="add_product_seller_id">Seller</label>
-                    <select class="form-select" id="add_product_seller_id" name="seller_id" required>
+                    <select class="form-select" id="add_product_seller_id" name="seller_id" required onchange="updateStallDropdown(this.value, 'add_product_stall_id')">
+                        <option value="">Select Seller</option>
                         <?php foreach ($sellers as $seller): ?>
                             <option value="<?= $seller['id'] ?>"><?= htmlspecialchars($seller['name']) ?></option>
                         <?php endforeach; ?>
@@ -250,11 +247,7 @@ $products = $prod_stmt->fetchAll();
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="add_product_stall_id">Stall</label>
-                    <select class="form-select" id="add_product_stall_id" name="stall_id" required>
-                        <?php foreach ($stalls as $stall): ?>
-                            <option value="<?= $stall['id'] ?>"><?= htmlspecialchars($stall['name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <select class="form-select" id="add_product_stall_id" name="stall_id" required></select>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Stock</label>
@@ -266,8 +259,59 @@ $products = $prod_stmt->fetchAll();
                 </div>
                 <button type="submit" class="btn btn-primary">Add Product</button>
             </form>
+            <script>
+            // On add modal open, reset and update stalls
+            document.getElementById('addProductModal').addEventListener('show.bs.modal', function () {
+                document.getElementById('add_product_seller_id').selectedIndex = 0;
+                document.getElementById('add_product_stall_id').innerHTML = '';
+            });
+            document.getElementById('add_product_seller_id').addEventListener('change', function() {
+                updateStallDropdown(this.value, 'add_product_stall_id');
+            });
+            </script>
           </div>
         </div>
       </div>
     </div>
-</div> 
+</div>
+<script>
+// Build a mapping of seller_id to their stalls
+const sellerStalls = {};
+<?php foreach ($sellers as $seller): ?>
+    sellerStalls[<?= $seller['id'] ?>] = [
+        <?php foreach ($stalls as $stall): if ($stall['seller_id'] == $seller['id']): ?>
+            {id: <?= $stall['id'] ?>, name: "<?= htmlspecialchars($stall['name'], ENT_QUOTES) ?>"},
+        <?php endif; endforeach; ?>
+    ];
+<?php endforeach; ?>
+
+function updateStallDropdown(sellerId, stallSelectId, selectedStallId = null) {
+    const select = document.getElementById(stallSelectId);
+    select.innerHTML = '';
+    if (sellerStalls[sellerId]) {
+        sellerStalls[sellerId].forEach(stall => {
+            const opt = document.createElement('option');
+            opt.value = stall.id;
+            opt.textContent = stall.name;
+            if (selectedStallId && stall.id == selectedStallId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+}
+</script>
+<?php foreach ($products as $prod): ?>
+<script>
+// On edit modal open, update stalls for the current seller
+(function() {
+    var modal = document.getElementById('editProductModal<?= $prod['id'] ?>');
+    modal.addEventListener('show.bs.modal', function () {
+        var sellerId = document.getElementById('edit_seller_id_<?= $prod['id'] ?>').value;
+        updateStallDropdown(sellerId, 'edit_stall_id_<?= $prod['id'] ?>', <?= $prod['stall_id'] ?>);
+    });
+    // Also update on seller change
+    document.getElementById('edit_seller_id_<?= $prod['id'] ?>').addEventListener('change', function() {
+        updateStallDropdown(this.value, 'edit_stall_id_<?= $prod['id'] ?>');
+    });
+})();
+</script>
+<?php endforeach; ?> 

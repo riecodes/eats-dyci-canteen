@@ -120,6 +120,15 @@ if ($orders) {
 // Auto-void orders not picked up after 3 hours
 $now = new DateTime();
 foreach ($orders as &$order) {
+    if ($order['status'] === 'processed') {
+        $order_time = new DateTime($order['created_at']);
+        $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
+        if ($now > $void_time) {
+            $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
+            $stmt->execute([$order['orderRef']]);
+            $order['status'] = 'void';
+        }
+    }
     if (!in_array($order['status'], ['done', 'cancelled', 'void'])) {
         $created = new DateTime($order['created_at']);
         $diff = $now->getTimestamp() - $created->getTimestamp();
@@ -212,8 +221,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_ref'])) 
                             <?php endif; ?>
                         </td>
                         <td><span
-                                class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span>
-                        </td>
+                                class="dashboard-badge <?= htmlspecialchars($order['status']) ?>">
+                                <?php
+                                    $status_map = [
+                                        'queue' => 'Queue',
+                                        'processing' => 'Processing',
+                                        'processed' => 'Processed',
+                                        'done' => 'Complete',
+                                        'cancelled' => 'Cancelled',
+                                        'void' => 'Void',
+                                        'pending' => 'Pending',
+                                    ];
+                                    echo $status_map[$order['status']] ?? htmlspecialchars($order['status']);
+                                ?>
+                            </span></td>
                         <td>₱<?= number_format($order['total_price'], 2) ?></td>
                         <td>
                             <?php if ($order['receipt_image']): ?>
@@ -292,16 +313,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_ref'])) 
                                                     <div><strong>Date:</strong>
                                                         <?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></div>
                                                     <div><strong>Status:</strong> <span
-                                                            class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span>
+                                                            class="dashboard-badge <?= htmlspecialchars($order['status']) ?>">
+                                                            <?= $status_map[$order['status']] ?? htmlspecialchars($order['status']) ?></span>
                                                     </div>
                                                     <div><strong>Total:</strong>
                                                         ₱<?= number_format($order['total_price'], 2) ?></div>
-                                                    <div>
-                                                        <strong>Receipt:</strong><br><?php if ($order['receipt_image']): ?><img
-                                                                src="<?= $order['receipt_image'] ?>" alt="Receipt"
-                                                                style="max-width:180px;max-height:180px;object-fit:cover;"
-                                                                class="rounded border"><?php else: ?><span class="text-muted">No
-                                                                receipt</span><?php endif; ?></div>
+                                            
                                                 </div>
                                                 <div class="col-md-6 mb-2">
                                                     <h6 class="fw-bold mb-2">Buyer Info</h6>
@@ -350,19 +367,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_ref'])) 
                                                     <label class="form-label">Status</label>
                                                     <select class="form-select" name="edit_status">
                                                         <option value="queue" <?= $order['status'] === 'queue' ? 'selected' : '' ?>>Queue</option>
-                                                        <option value="pending"
-                                                            <?= $order['status'] === 'pending' ? 'selected' : '' ?>>Pending
-                                                        </option>
-                                                        <option value="processing"
-                                                            <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing
-                                                        </option>
-                                                        <option value="done" <?= $order['status'] === 'done' ? 'selected' : '' ?>>
-                                                            Done</option>
-                                                        <option value="cancelled"
-                                                            <?= $order['status'] === 'cancelled' ? 'selected' : '' ?>>Cancelled
-                                                        </option>
-                                                        <option value="void" <?= $order['status'] === 'void' ? 'selected' : '' ?>>
-                                                            Void</option>
+                                                        <option value="processing" <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing</option>
+                                                        <option value="processed" <?= $order['status'] === 'processed' ? 'selected' : '' ?>>Processed</option>
+                                                        <option value="done" <?= $order['status'] === 'done' ? 'selected' : '' ?>>Complete</option>
+                                                         <option value="void" <?= $order['status'] === 'void' ? 'selected' : '' ?>>Void</option>
                                                     </select>
                                                 </div>
                                                 <button type="submit" class="btn btn-primary">Save Changes</button>

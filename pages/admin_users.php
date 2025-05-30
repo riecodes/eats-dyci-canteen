@@ -139,6 +139,8 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
           <th>Name</th>
           <th>Email</th>
           <th>Role</th>
+          <th>Department</th>
+          <th>Position</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -149,6 +151,8 @@ $users = array_filter($users, function($u) use ($admin_id) { return $u['id'] != 
           <td><?= htmlspecialchars($user['name']) ?></td>
           <td><?= htmlspecialchars($user['email']) ?></td>
           <td class="text-capitalize"><?= htmlspecialchars($user['role']) ?></td>
+          <td><?php if ($user['role'] === 'buyer') echo htmlspecialchars($user['department'] ?? ''); ?></td>
+          <td><?php if ($user['role'] === 'buyer') echo htmlspecialchars($user['position'] ?? ''); ?></td>
           <td>
             <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editUserModal<?= $user['id'] ?>">Edit</button>
             <form method="post" style="display:inline" onsubmit="return confirm('Delete this user?')">
