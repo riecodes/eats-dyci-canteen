@@ -3,6 +3,11 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 
+// Mark all announcements as read for this user
+$user_id = $_SESSION['user_id'];
+$stmt = $pdo->prepare('INSERT IGNORE INTO announcement_reads (user_id, announcement_id, read_at) SELECT ?, id, NOW() FROM announcements');
+$stmt->execute([$user_id]);
+
 // Fetch all announcements (admin and seller)
 $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DESC')->fetchAll();
 

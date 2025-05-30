@@ -86,6 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_announcement_i
         $delete_error = 'Failed to delete announcement.';
     }
 }
+// Mark all announcements as read for this seller
+$user_id = $_SESSION['user_id'];
+$stmt = $pdo->prepare('INSERT IGNORE INTO announcement_reads (user_id, announcement_id, read_at) SELECT ?, id, NOW() FROM announcements');
+$stmt->execute([$user_id]);
 // Fetch all announcements: admin + this seller's
 $stmt = $pdo->prepare('SELECT * FROM announcements WHERE seller_id IS NULL OR seller_id = ? ORDER BY created_at DESC');
 $stmt->execute([$seller_id]);
