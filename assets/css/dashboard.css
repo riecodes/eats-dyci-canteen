@@ -179,20 +179,30 @@ body {
     letter-spacing: 0.5px;
 }
 
-.dashboard-badge.pending {
+.dashboard-badge.queue {
     background: #ffeaa7;
-    color: #d63031;
+    color: #222;
 }
 
 .dashboard-badge.processing {
-    background: #fdcb6e;
-    color: #e17055;
+    background: #a5d8ff;
+    color: #222;
 }
 
-.dashboard-badge.done,
-.dashboard-badge.completed {
-    background: #55efc4;
-    color: #00b894;
+.dashboard-badge.processed {
+    background: #b2f2bb;
+    color: #222;
+}
+
+.dashboard-badge.done {
+    background: #ffd6e0;
+    color: #222;
+}
+
+.dashboard-badge.void {
+    background: #ff6b6b;
+    color: #222;
+    border: 1px solid #c0392b;
 }
 
 /* Responsive improvements */

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id INT,
     total_price DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('queue','processing','done','cancelled','voided') DEFAULT 'queue',
+    status ENUM('queue','processing','processed','done','void') DEFAULT 'queue',
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 

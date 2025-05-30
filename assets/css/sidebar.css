@@ -4,7 +4,7 @@
     border-right: 1.5px solid var(--border-navy);
     box-shadow: 0 2px 8px var(--shadow-navy);
     transition: all 0.3s ease;
-    width: 240px;
+    width: 260px;
     overflow-y: auto;
     flex-shrink: 0;
     display: flex;
