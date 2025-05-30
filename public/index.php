@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+    
 <head>
     <meta charset="UTF-8">
     <title>EATS-DYCI-CANTEEN</title>
@@ -17,6 +18,9 @@
 <body>
     <?php
     if (session_status() === PHP_SESSION_NONE) { session_start(); }
+    
+    date_default_timezone_set('Asia/Manila');
+    
     require_once '../includes/db.php';
     ?>
     <?php include '../includes/topbar.php'; ?>
@@ -27,10 +31,16 @@
             // Routing logic
             $page = $_GET['page'] ?? 'admin_dashboard';
             $page_file = __DIR__ . '/../pages/' . basename($page) . '.php';
-            if (file_exists($page_file)) {
-                include $page_file;
-            } else {
-                include __DIR__ . '/../pages/admin_dashboard.php';
+            switch ($page) {
+                case 'admin_backup':
+                    include '../pages/admin_backup.php';
+                    break;
+                default:
+                    if (file_exists($page_file)) {
+                        include $page_file;
+                    } else {
+                        include __DIR__ . '/../pages/admin_dashboard.php';
+                    }
             }
             ?>
         </div>

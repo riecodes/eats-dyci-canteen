@@ -18,8 +18,8 @@ $total_products = $pdo->query("SELECT COUNT(*) FROM products")->fetchColumn();
 $stmt = $pdo->query("SELECT COUNT(*) FROM orders WHERE YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDATE())");
 $orders_this_month = $stmt->fetchColumn();
 
-// Revenue this month (done/processing orders)
-$stmt = $pdo->query("SELECT SUM(total_price) FROM orders WHERE YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDATE()) AND status IN ('done','processing')");
+// Revenue this month (done/void orders)
+$stmt = $pdo->query("SELECT SUM(total_price) FROM orders WHERE YEAR(created_at)=YEAR(CURDATE()) AND MONTH(created_at)=MONTH(CURDATE()) AND status IN ('done','void')");
 $revenue = $stmt->fetchColumn();
 if ($revenue === null) $revenue = 0;
 
@@ -56,6 +56,23 @@ $stmt = $pdo->query("SELECT stalls.name, COUNT(products.id) as prod_count FROM s
 foreach ($stmt->fetchAll() as $row) {
     $prod_dist[$row['name']] = (int)$row['prod_count'];
 }
+
+// --- SALES REPORT DATA ---
+$sales_stmt = $pdo->query("SELECT p.name AS product, p.price, u.name AS seller, s.name AS stall, c.name AS canteen, SUM(oi.quantity) AS qty_sold, SUM(oi.quantity * p.price) AS total_sales
+FROM order_items oi
+JOIN products p ON oi.product_id = p.id
+JOIN stalls s ON p.stall_id = s.id
+JOIN canteens c ON s.canteen_id = c.id
+JOIN users u ON p.seller_id = u.id
+JOIN orders o ON oi.order_id = o.orderRef
+WHERE o.status IN ('done','void')
+GROUP BY p.id, p.price, u.name, s.name, c.name
+ORDER BY total_sales DESC");
+$sales_report = $sales_stmt->fetchAll();
+
+// For chart: product names and total sales
+$sales_chart_labels = array_map(function($row){return $row['product'];}, $sales_report);
+$sales_chart_data = array_map(function($row){return (float)$row['total_sales'];}, $sales_report);
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <div class="container-fluid px-4 pt-4">
@@ -174,6 +191,47 @@ foreach ($stmt->fetchAll() as $row) {
       </div>
     </div>
   </div>
+
+  <!-- Sales Report Table -->
+  <div class="dashboard-section-title mt-4 mb-2">Sales Report</div>
+  <div class="dashboard-table mb-4 table-responsive">
+    <table class="table mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Seller</th>
+                <th>Stall</th>
+                <th>Canteen</th>
+                <th>Quantity Sold</th>
+                <th>Total Sales</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($sales_report as $row): ?>
+            <tr>
+                <td><?= htmlspecialchars($row['product']) ?></td>
+                <td>₱<?= number_format($row['price'],2) ?></td>
+                <td><?= htmlspecialchars($row['seller']) ?></td>
+                <td><?= htmlspecialchars($row['stall']) ?></td>
+                <td><?= htmlspecialchars($row['canteen']) ?></td>
+                <td><?= (int)$row['qty_sold'] ?></td>
+                <td>₱<?= number_format($row['total_sales'],2) ?></td>
+            </tr>
+            <?php endforeach; ?>
+            <?php if (empty($sales_report)): ?>
+            <tr><td colspan="7" class="text-center text-muted">No sales data.</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+  </div>
+
+  <!-- Sales Report Chart -->
+  <div class="dashboard-section-title mb-2">Sales by Product</div>
+  <div style="background:#fff; border-radius:1rem; padding:1.2rem; margin-bottom:1.2rem; border:1px solid #f0f0f0; max-width:500px; margin-left:auto; margin-right:auto;">
+    <canvas id="salesReportChart" height="120"></canvas>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     // Orders per day data
@@ -223,6 +281,27 @@ foreach ($stmt->fetchAll() as $row) {
       options: {
         responsive: true,
         plugins: { legend: { position: 'bottom' } }
+      }
+    });
+    // Sales report data
+    const salesReportLabels = <?= json_encode($sales_chart_labels) ?>;
+    const salesReportData = <?= json_encode($sales_chart_data) ?>;
+    new Chart(document.getElementById('salesReportChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: salesReportLabels,
+        datasets: [{
+          label: 'Total Sales',
+          data: salesReportData,
+          backgroundColor: '#ffd700',
+          borderColor: '#bfa100',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, precision: 0 } }
       }
     });
   </script>

@@ -262,14 +262,14 @@ foreach ($orders as $order) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php
-                            $order_time = new DateTime($order['created_at']);
-                            $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-                            $now = new DateTime();
-                            $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
-                            if ($order['status'] === 'void') {
-                                echo '<span class="badge bg-danger">Voided (auto)</span>';
-                            } elseif (!in_array($order['status'], ['done', 'void'])) {
+                            <?php if ($order['status'] === 'processed'): ?>
+                                <span class="void-timer" data-void-time="<?= htmlspecialchars($order['void_time']) ?>"></span>
+                                <noscript>
+                                <?php
+                                $order_time = new DateTime($order['created_at']);
+                                $void_time = (clone $order_time)->setTime(15, 0, 0);
+                                $now = new DateTime();
+                                $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
                                 if ($diff_sec > 0) {
                                     $h = floor($diff_sec / 3600);
                                     $m = floor(($diff_sec % 3600) / 60);
@@ -278,8 +278,11 @@ foreach ($orders as $order) {
                                 } else {
                                     echo '<span class="badge bg-danger">Voiding...</span>';
                                 }
-                            }
-                            ?>
+                                ?>
+                                </noscript>
+                            <?php elseif ($order['status'] === 'void'): ?>
+                                <span class="badge bg-danger">Voided (auto)</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <div class="dropdown">

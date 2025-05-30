@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 30, 2025 at 02:03 AM
+-- Generation Time: May 30, 2025 at 05:55 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,8 +43,32 @@ CREATE TABLE `announcements` (
 --
 
 INSERT INTO `announcements` (`id`, `title`, `message`, `type`, `seller_id`, `stall_id`, `created_at`, `image`) VALUES
-(1, 'HI', 'HUI', 'info', NULL, NULL, '2025-05-28 18:10:10', '../assets/imgs/announcement_683751822edaf.jpg'),
-(2, 'BUY 1 TAKE 1 MILKTEA', 'BUY 1 TAKE 1 MILKTEA', 'promo', 3, 3, '2025-05-29 18:03:38', '../assets/imgs/img_6838bb9353637.jpg');
+(1, 'BUY 1 TAKE 1s', 'MILKTEAs', 'promo', NULL, NULL, '2025-05-30 00:37:19', '../assets/imgs/img_6838fdbf66f8a.jpg'),
+(2, 'pogi ako', 'real', 'info', NULL, NULL, '2025-05-30 03:52:03', '../assets/imgs/img_68392b63b5568.jpg');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `announcement_reads`
+--
+
+CREATE TABLE `announcement_reads` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `announcement_id` int(11) NOT NULL,
+  `read_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `announcement_reads`
+--
+
+INSERT INTO `announcement_reads` (`id`, `user_id`, `announcement_id`, `read_at`) VALUES
+(1, 9, 1, '2025-05-30 09:42:41'),
+(7, 11, 1, '2025-05-30 09:43:25'),
+(25, 10, 1, '2025-05-30 11:29:31'),
+(31, 11, 2, '2025-05-30 11:52:08'),
+(32, 10, 2, '2025-05-30 11:52:22');
 
 -- --------------------------------------------------------
 
@@ -63,9 +87,9 @@ CREATE TABLE `canteens` (
 --
 
 INSERT INTO `canteens` (`id`, `name`, `image`) VALUES
-(1, 'canteen1', '../assets/imgs/img_6837a02b525e7.jpg'),
-(2, 'canteen2', '../assets/imgs/img_6838f16a8e912.jpg'),
-(3, 'canteen3', '../assets/imgs/img_6838f1748e5ad.webp');
+(1, 'Canteen 1', '../assets/imgs/img_6838fcf82c484.webp'),
+(2, 'Canteen 2', '../assets/imgs/img_6838fd013c94d.jpg'),
+(3, 'Canteen 3', '../assets/imgs/img_6838fd0c884fc.jpg');
 
 -- --------------------------------------------------------
 
@@ -84,7 +108,7 @@ CREATE TABLE `categories` (
 --
 
 INSERT INTO `categories` (`id`, `name`, `description`) VALUES
-(1, 'Food', '124');
+(2, 'Food', '');
 
 -- --------------------------------------------------------
 
@@ -97,17 +121,20 @@ CREATE TABLE `orders` (
   `user_id` int(11) DEFAULT NULL,
   `total_price` decimal(10,2) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `status` enum('queue','processing','done','cancelled','voided') DEFAULT 'queue',
+  `status` enum('queue','processing','processed','done','void') DEFAULT 'queue',
   `receipt_image` varchar(255) DEFAULT NULL,
-  `note` text DEFAULT NULL
+  `note` text DEFAULT NULL,
+  `seen_by_seller` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`orderRef`, `user_id`, `total_price`, `created_at`, `status`, `receipt_image`, `note`) VALUES
-('ORD6838bfc363aa7', 5, 178.00, '2025-05-29 20:12:51', 'processing', '../assets/imgs/receipt_6838bfc36376e.png', 'asghrashr');
+INSERT INTO `orders` (`orderRef`, `user_id`, `total_price`, `created_at`, `status`, `receipt_image`, `note`, `seen_by_seller`) VALUES
+('ORD68391547129fc', 11, 2.00, '2025-05-30 02:17:43', 'void', '../assets/imgs/receipt_6839154712644.png', '', 0),
+('ORD6839156152c69', 11, 2.00, '2025-05-30 02:18:09', 'done', '../assets/imgs/receipt_683915615288e.png', 'a', 0),
+('ORD6839278d03fc8', 11, 5.00, '2025-05-30 03:35:41', 'queue', '../assets/imgs/receipt_6839278d03c9b.jpg', 'sss', 0);
 
 -- --------------------------------------------------------
 
@@ -127,21 +154,9 @@ CREATE TABLE `order_items` (
 --
 
 INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`) VALUES
-(1, 'ORD6838bfc363aa7', 3, 14),
-(2, 'ORD6838bfc363aa7', 2, 5);
-
--- --------------------------------------------------------
-
---
--- Table structure for table `order_receipts`
---
-
-CREATE TABLE `order_receipts` (
-  `id` int(11) NOT NULL,
-  `order_id` varchar(50) DEFAULT NULL,
-  `image` varchar(255) DEFAULT NULL,
-  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(6, 'ORD68391547129fc', 2, 1),
+(7, 'ORD6839156152c69', 2, 1),
+(8, 'ORD6839278d03fc8', 4, 5);
 
 -- --------------------------------------------------------
 
@@ -166,8 +181,9 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `seller_id`, `name`, `description`, `price`, `image`, `category_id`, `stall_id`, `stock`) VALUES
-(2, 3, '1', '1', 30.00, '../assets/imgs/products_68364dd74b22e.jpg', 1, 3, 10),
-(3, 3, '2', '2', 2.00, '../assets/imgs/products_6838bd3961b27.jpg', 1, 3, 5);
+(1, 9, 'Pizza', 'Pizza', 99.00, '../assets/imgs/products_6838ffb1b128b.jpg', 2, 1, 8),
+(2, 9, '1', '1', 2.00, '../assets/imgs/products_68390059bf016.png', 2, 1, 7),
+(4, 10, '1', '1', 99.01, NULL, 2, 2, 50);
 
 -- --------------------------------------------------------
 
@@ -205,8 +221,8 @@ CREATE TABLE `stalls` (
 --
 
 INSERT INTO `stalls` (`id`, `name`, `description`, `seller_id`, `canteen_id`, `image`) VALUES
-(3, 'stall for seller 1', 'seller 1 stall', 3, 1, '../assets/imgs/stall_6838f2dc0b85d.jpg'),
-(5, 'stall for seller 2', 'seller 2 stall', 6, 3, '../assets/imgs/stall_6838f2e56ce6b.jpg');
+(1, 'Razzies', 'JUST BINGO MY LOCATIONs', 9, 1, '../assets/imgs/stall_6838fd2d054d2.jpg'),
+(2, 'KKKs', 'WAHs', 10, 2, '../assets/imgs/stall_6838fd544f213.jpg');
 
 -- --------------------------------------------------------
 
@@ -231,24 +247,11 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`, `qr_code`, `department`, `position`) VALUES
-(1, 'Admin', 'a@gmail.com', '$2y$10$oxeXOZcU5sSfIYkzZjtBEuxgbMNC6muwa0crfr.R1JvP5lG5WeVzS', 'admin', '2025-05-27 04:37:18', NULL, NULL, NULL),
-(3, 'seller', 's@gmail.com', '$2y$10$4S7TyUPCp/VKPQAQ3Dy9a.Whwef8yRWkVwrzj..03N0/8vwZBpPC2', 'seller', '2025-05-27 22:56:27', '../assets/imgs/qr_seller_3.jpg', NULL, NULL),
-(5, 'buy', 'b@gmail.com', '$2y$10$arjdYcQ.35QKUAJZz/zXH.YuJJfEKxYZPmc8Ld66gETgwq0XQhqKq', 'buyer', '2025-05-27 22:57:13', NULL, 'CPE', 'Staff'),
-(6, 'seller2', 's2@gmail.com', '$2y$10$FZsGNi8ErAEi7ykSyggmneTw6kExO4yi/yQcaN0P8gIpLJ4Pf7b1G', 'seller', '2025-05-29 17:11:54', '../assets/imgs/qr_seller_6.png', NULL, NULL),
-(7, 'buyer2', 'b2@gmail.com', '$2y$10$vW0rh.IdHUfv4F.Svfd5/OQUBTLFnseKHJMYWLsdgxAqdMoWPwFHa', 'buyer', '2025-05-29 19:40:26', NULL, 'IT', 'Student');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `user_announcement_views`
---
-
-CREATE TABLE `user_announcement_views` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
-  `announcement_id` int(11) DEFAULT NULL,
-  `viewed_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(1, 'Admin', 'a@a.com', '$2y$10$oxeXOZcU5sSfIYkzZjtBEuxgbMNC6muwa0crfr.R1JvP5lG5WeVzS', 'admin', '2025-05-27 04:37:18', NULL, NULL, NULL),
+(8, 'Jervic Manalo', 'jervic@student.com', '$2y$10$TRC0AlUFro8kF683MqshmembCm7aebPISPGM/CCNdKdyl7EidBJpa', 'buyer', '2025-05-30 00:30:37', NULL, 'CS', 'Teacher'),
+(9, 'Cristina Maglanoc', 'cristina@seller.com', '$2y$10$aM0Hh2Az25KSTHPkFvMZCOCZ4zbBSIpAz7QPQLwZU3miPdWsN6yMe', 'seller', '2025-05-30 00:30:54', '../assets/imgs/qr_seller_9.jpg', NULL, NULL),
+(10, 'John Frederick', 'jf@seller.com', '$2y$10$B8WQF2CCT/yOEQXj3/ELG.2BIy5R3T8PvZXxpp9Y.ZMDRIl6K/fY6', 'seller', '2025-05-30 00:31:30', '../assets/imgs/qr_seller_10.jpg', NULL, NULL),
+(11, 'Andrew Tambac', 'andrew@student.com', '$2y$10$M0mWg.M2SlfuAzqMld7NDuBngxOPE6gxstHMW6Kyk9X7KeaClUiUK', 'buyer', '2025-05-30 00:31:53', NULL, 'CPE', 'Student');
 
 --
 -- Indexes for dumped tables
@@ -261,6 +264,14 @@ ALTER TABLE `announcements`
   ADD PRIMARY KEY (`id`),
   ADD KEY `seller_id` (`seller_id`),
   ADD KEY `stall_id` (`stall_id`);
+
+--
+-- Indexes for table `announcement_reads`
+--
+ALTER TABLE `announcement_reads`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`,`announcement_id`),
+  ADD KEY `announcement_id` (`announcement_id`);
 
 --
 -- Indexes for table `canteens`
@@ -288,13 +299,6 @@ ALTER TABLE `order_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `order_id` (`order_id`),
   ADD KEY `fk_order_items_product` (`product_id`);
-
---
--- Indexes for table `order_receipts`
---
-ALTER TABLE `order_receipts`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `order_id` (`order_id`);
 
 --
 -- Indexes for table `products`
@@ -330,14 +334,6 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`);
 
 --
--- Indexes for table `user_announcement_views`
---
-ALTER TABLE `user_announcement_views`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `announcement_id` (`announcement_id`);
-
---
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -346,6 +342,12 @@ ALTER TABLE `user_announcement_views`
 --
 ALTER TABLE `announcements`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `announcement_reads`
+--
+ALTER TABLE `announcement_reads`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `canteens`
@@ -357,25 +359,19 @@ ALTER TABLE `canteens`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT for table `order_receipts`
---
-ALTER TABLE `order_receipts`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `reviews`
@@ -387,19 +383,13 @@ ALTER TABLE `reviews`
 -- AUTO_INCREMENT for table `stalls`
 --
 ALTER TABLE `stalls`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `user_announcement_views`
---
-ALTER TABLE `user_announcement_views`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- Constraints for dumped tables
@@ -413,6 +403,13 @@ ALTER TABLE `announcements`
   ADD CONSTRAINT `announcements_ibfk_2` FOREIGN KEY (`stall_id`) REFERENCES `stalls` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `announcement_reads`
+--
+ALTER TABLE `announcement_reads`
+  ADD CONSTRAINT `announcement_reads_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `announcement_reads_ibfk_2` FOREIGN KEY (`announcement_id`) REFERENCES `announcements` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `orders`
 --
 ALTER TABLE `orders`
@@ -424,12 +421,6 @@ ALTER TABLE `orders`
 ALTER TABLE `order_items`
   ADD CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`orderRef`) ON DELETE CASCADE;
-
---
--- Constraints for table `order_receipts`
---
-ALTER TABLE `order_receipts`
-  ADD CONSTRAINT `order_receipts_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`orderRef`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `products`
@@ -453,13 +444,6 @@ ALTER TABLE `reviews`
 ALTER TABLE `stalls`
   ADD CONSTRAINT `stalls_ibfk_1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `stalls_ibfk_2` FOREIGN KEY (`canteen_id`) REFERENCES `canteens` (`id`) ON DELETE SET NULL;
-
---
--- Constraints for table `user_announcement_views`
---
-ALTER TABLE `user_announcement_views`
-  ADD CONSTRAINT `user_announcement_views_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `user_announcement_views_ibfk_2` FOREIGN KEY (`announcement_id`) REFERENCES `announcements` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

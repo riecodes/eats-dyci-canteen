@@ -123,71 +123,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         }
         if (!$valid) {
             // Do not proceed
-    } else {
-        // 1. Check order limits (e.g., max 3 orders per day)
-        $today = date('Y-m-d');
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM orders WHERE user_id = ? AND DATE(created_at) = ?');
-        $stmt->execute([$user_id, $today]);
-        $orders_today = $stmt->fetchColumn();
-        $max_orders_per_day = 3; // Change as needed
-        if ($orders_today >= $max_orders_per_day) {
-            $order_error = 'You have reached the maximum number of orders for today.';
         } else {
+            // Enforce max 5 total items per cart (not just unique products)
+            $total_qty = array_sum($cart);
+            if ($total_qty > 5) {
+                $order_error = 'You can only order up to 5 items in total per order.';
+                $valid = false;
+            }
             // 2. Check stock for each item
             $cart_products = [];
-                foreach ($cart as $product_id => $qty) {
-                    $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
-                    $stmt->execute([$product_id]);
+            foreach ($cart as $product_id => $qty) {
+                $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+                $stmt->execute([$product_id]);
                 $prod = $stmt->fetch();
                 if (!$prod || $qty > $prod['stock']) {
                     $valid = false;
                     $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
                     break;
                 }
-                    $cart_products[$product_id] = $prod;
+                $cart_products[$product_id] = $prod;
             }
-                // 3. Validate receipt image (portrait, file type)
-                $receipt_path = null;
+            // 3. Validate receipt image (portrait, file type)
+            $receipt_path = null;
             if ($valid) {
-                    if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
-                        $img_info = getimagesize($_FILES['receipt_image']['tmp_name']);
-                        if ($img_info && $img_info[1] > $img_info[0]) { // portrait
-                            $ext = pathinfo($_FILES['receipt_image']['name'], PATHINFO_EXTENSION);
-                            $target = '../assets/imgs/receipt_' . uniqid() . '.' . $ext;
-                            if (move_uploaded_file($_FILES['receipt_image']['tmp_name'], $target)) {
-                                $receipt_path = $target;
-                            } else {
-                                $order_error = 'Failed to upload receipt image.';
-                                $valid = false;
-                            }
+                if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
+                    $img_info = getimagesize($_FILES['receipt_image']['tmp_name']);
+                    if ($img_info && $img_info[1] > $img_info[0]) { // portrait
+                        $ext = pathinfo($_FILES['receipt_image']['name'], PATHINFO_EXTENSION);
+                        $target = '../assets/imgs/receipt_' . uniqid() . '.' . $ext;
+                        if (move_uploaded_file($_FILES['receipt_image']['tmp_name'], $target)) {
+                            $receipt_path = $target;
                         } else {
-                            $order_error = 'Receipt image must be portrait.';
+                            $order_error = 'Failed to upload receipt image.';
                             $valid = false;
                         }
                     } else {
-                        $order_error = 'Receipt image is required.';
+                        $order_error = 'Receipt image must be portrait (height greater than width). Please upload a portrait image.';
                         $valid = false;
                     }
+                } else {
+                    $order_error = 'Receipt image is required.';
+                    $valid = false;
                 }
-                // 4. Insert order
-                if ($valid) {
-                    $orderRef = uniqid('ORD');
-                    $total_price = 0;
+            }
+            // Prevent orders after 2:45 PM
+            $current_time = new DateTime();
+            $cutoff_time = (clone $current_time)->setTime(14, 45, 0); // 2:45 PM today
+            if ($current_time >= $cutoff_time) {
+                $order_error = 'Orders cannot be placed after 2:45 PM.';
+                $valid = false;
+            }
+            // 4. Insert order
+            if ($valid) {
+                $orderRef = uniqid('ORD');
+                $total_price = 0;
+                foreach ($cart as $product_id => $qty) {
+                    $total_price += $cart_products[$product_id]['price'] * $qty;
+                }
+                $note = trim($_POST['order_note'] ?? '');
+                $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price, receipt_image, note, status) VALUES (?, ?, ?, ?, ?, ?)');
+                if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'queue'])) {
+                    // 5. Insert order items and update stock
                     foreach ($cart as $product_id => $qty) {
-                        $total_price += $cart_products[$product_id]['price'] * $qty;
+                        $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
+                        $stmt->execute([$orderRef, $product_id, $qty]);
+                        // Update stock
+                        $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+                        $stmt->execute([$qty, $product_id]);
                     }
-                    $note = trim($_POST['order_note'] ?? '');
-                    $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price, receipt_image, note, status) VALUES (?, ?, ?, ?, ?, ?)');
-                    if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'queue'])) {
-                        // 5. Insert order items and update stock
-                        foreach ($cart as $product_id => $qty) {
-                            $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
-                            $stmt->execute([$orderRef, $product_id, $qty]);
-                            // Update stock
-                            $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
-                            $stmt->execute([$qty, $product_id]);
-                        }
-                        // 6. Clear cart
+                    // 6. Clear cart
                     $_SESSION['cart'] = [];
                     $order_success = 'Order placed successfully!';
                 } else {
@@ -196,7 +200,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             }
         }
     }
-}
 }
 
 // Show canteens as cards at the top
@@ -365,4 +368,9 @@ if ($selected_canteen && $selected_stall) {
             echo '</div>';
         }
     }
+}
+
+// Show error feedback if not portrait
+if (!empty($order_error)) {
+    echo '<div class="alert alert-danger">' . htmlspecialchars($order_error) . '</div>';
 }

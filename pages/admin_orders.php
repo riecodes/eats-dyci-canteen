@@ -44,7 +44,7 @@ $status_map = [
     'void' => 'Void',
 ];
 
-// Auto-void orders not picked up after 3 hours
+// Auto-void orders not picked up by 3PM same day
 $now = new DateTime();
 foreach ($orders as &$order) {
     $order_time = new DateTime($order['created_at']);
@@ -64,6 +64,8 @@ foreach ($orders as &$order) {
             $order['status'] = 'void';
         }
     }
+    // Store void_time for JS
+    $order['void_time'] = $void_time->format(DateTime::ATOM);
 }
 unset($order);
 // Sort orders oldest first
@@ -104,8 +106,7 @@ foreach ($orders as $order) {
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <div class="container-fluid px-4 pt-4">
-    <div class="dashboard-section-title mb-3">All Orders</div>
-    <div class="mb-3"><strong>Total Sales (including voided):</strong> ₱<?= number_format($total_sales, 2) ?></div>
+    <div class="dashboard-section-title mb-3">All Orders</div>    
     <?php if ($status_success): ?><div class="alert alert-success mb-2"><?= $status_success ?></div><?php endif; ?>
     <?php if ($status_error): ?><div class="alert alert-danger mb-2"><?= $status_error ?></div><?php endif; ?>
     <div class="dashboard-table mb-4 table-responsive">
@@ -126,16 +127,22 @@ foreach ($orders as $order) {
             <tbody>
                 <?php foreach ($orders as $order): ?>
                     <tr>
-                        <td><?= htmlspecialchars($order['orderRef']) ?></td>
+                        <td style="max-width:120px; background:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-radius:0.5rem; padding:0.5rem 1rem;">
+                            <?= htmlspecialchars($order['orderRef']) ?>
+                        </td>
                         <td><?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></td>
                         <td><?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?></td>
                         <td>
                             <?php if (!empty($order_items[$order['orderRef']])): ?>
-                                <ul class="mb-0">
-                                    <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                                        <li><?= htmlspecialchars($item['product_name']) ?> (<?= $item['quantity'] ?>pcs)</li>
-                                    <?php endforeach; ?>
-                                </ul>
+                                <span style="font-size:0.97em;">
+                                <?php
+                                $item_strs = [];
+                                foreach ($order_items[$order['orderRef']] as $item) {
+                                    $item_strs[] = htmlspecialchars($item['product_name']) . ' (' . $item['quantity'] . 'pcs)';
+                                }
+                                echo implode(', ', $item_strs);
+                                ?>
+                                </span>
                             <?php endif; ?>
                         </td>
                         <td><span class="dashboard-badge <?= htmlspecialchars($order['status']) ?>">
@@ -163,14 +170,14 @@ foreach ($orders as $order) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php
-                            $order_time = new DateTime($order['created_at']);
-                            $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-                            $now = new DateTime();
-                            $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
-                            if ($order['status'] === 'void') {
-                                echo '<span class="badge bg-danger">Voided (auto)</span>';
-                            } elseif (!in_array($order['status'], ['done', 'void'])) {
+                            <?php if ($order['status'] === 'processed'): ?>
+                                <span class="void-timer" data-void-time="<?= htmlspecialchars($order['void_time']) ?>"></span>
+                                <noscript>
+                                <?php
+                                $order_time = new DateTime($order['created_at']);
+                                $void_time = (clone $order_time)->setTime(15, 0, 0);
+                                $now = new DateTime();
+                                $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
                                 if ($diff_sec > 0) {
                                     $h = floor($diff_sec / 3600);
                                     $m = floor(($diff_sec % 3600) / 60);
@@ -179,8 +186,11 @@ foreach ($orders as $order) {
                                 } else {
                                     echo '<span class="badge bg-danger">Voiding...</span>';
                                 }
-                            }
-                            ?>
+                                ?>
+                                </noscript>
+                            <?php elseif ($order['status'] === 'void'): ?>
+                                <span class="badge bg-danger">Voided (auto)</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <div class="dropdown">
@@ -203,14 +213,12 @@ foreach ($orders as $order) {
                             <div class="modal fade" id="viewOrderModal<?= $order['orderRef'] ?>" tabindex="-1"
                                 aria-labelledby="viewOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
                                 <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="viewOrderModalLabel<?= $order['orderRef'] ?>">Order
-                                                Details</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
+                                    <div class="modal-content" style="background:#fff; border-radius:1.2rem; padding:2rem 2.5rem;">
+                                        <div class="modal-header" style="border-bottom:0; padding-bottom:0.5rem;">
+                                            <h5 class="modal-title" id="viewOrderModalLabel<?= $order['orderRef'] ?>">Order Details</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body">
+                                        <div class="modal-body" style="padding:2rem 1.5rem 1.5rem 1.5rem;">
                                             <div class="row">
                                                 <div class="col-md-6 mb-2">
                                                     <h6 class="fw-bold mb-2">Order Info</h6>
@@ -244,12 +252,15 @@ foreach ($orders as $order) {
                                             </div>
                                             <hr>
                                             <h6 class="fw-bold mb-2">Items</h6>
-                                            <ul>
-                                                <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                                                    <li><?= htmlspecialchars($item['product_name']) ?> x
-                                                        <?= $item['quantity'] ?></li>
-                                                <?php endforeach; ?>
-                                            </ul>
+                                            <div style="font-size:1.05em;">
+                                            <?php
+                                            $item_strs = [];
+                                            foreach ($order_items[$order['orderRef']] as $item) {
+                                                $item_strs[] = htmlspecialchars($item['product_name']) . ' (' . $item['quantity'] . 'pcs)';
+                                            }
+                                            echo implode(', ', $item_strs);
+                                            ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -292,6 +303,29 @@ foreach ($orders as $order) {
         </table>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function updateTimers() {
+    document.querySelectorAll('.void-timer').forEach(function(span) {
+      var voidTime = new Date(span.getAttribute('data-void-time'));
+      var now = new Date();
+      var diff = Math.floor((voidTime - now) / 1000);
+      if (diff > 0) {
+        var h = Math.floor(diff / 3600);
+        var m = Math.floor((diff % 3600) / 60);
+        var s = diff % 60;
+        span.textContent = 'Will be voided in ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        span.className = 'void-timer badge bg-warning text-dark';
+      } else {
+        span.textContent = 'Voiding...';
+        span.className = 'void-timer badge bg-danger';
+      }
+    });
+  }
+  setInterval(updateTimers, 1000);
+  updateTimers();
+});
+</script>
 <!-- Voiding time calculation code (PHP):
 $order_time = new DateTime($order['created_at']);
 $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day

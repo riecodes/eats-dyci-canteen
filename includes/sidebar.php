@@ -22,6 +22,9 @@
                 <i class="fas fa-bullhorn me-2 sidebar-icon-admin"></i>Announcements
             </a></li>
             <li><a href="index.php?page=admin_account" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_account' ? 'active' : ''; ?>"><i class="fas fa-user-cog me-2 sidebar-icon-admin"></i>My Account</a></li>
+            <li><a href="index.php?page=admin_backup" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_backup' ? 'active' : ''; ?>">
+                <i class="fas fa-database me-2 sidebar-icon-admin"></i>Backup Database
+            </a></li>
         <?php elseif ($role === 'seller'): ?>
             <li class="nav-item text-uppercase fw-bold small text-success mb-2" style="letter-spacing:1px; display:none;">Seller Panel</li>
             <li class="nav-item"><a href="index.php?page=seller_dashboard" class="nav-link <?php echo ($_GET['page'] ?? 'seller_dashboard') === 'seller_dashboard' ? 'active' : ''; ?>"><i class="fas fa-tachometer-alt me-2 sidebar-icon-seller"></i>Dashboard</a></li>
