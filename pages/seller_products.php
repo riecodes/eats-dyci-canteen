@@ -139,7 +139,18 @@ $products = $prod_stmt->fetchAll();
                 <td><?= htmlspecialchars($prod['name']) ?></td>
                 <td><?= htmlspecialchars($prod['description']) ?></td>
                 <td>₱<?= number_format($prod['price'],2) ?></td>
-                <td><?= htmlspecialchars($prod['category_id']) ?></td>
+                <td>
+                    <?php
+                    $cat_name = '';
+                    foreach ($categories as $cat) {
+                        if ($cat['id'] == $prod['category_id']) {
+                            $cat_name = $cat['name'];
+                            break;
+                        }
+                    }
+                    echo htmlspecialchars($cat_name);
+                    ?>
+                </td>
                 <td><?= htmlspecialchars($prod['stock']) ?>
 <?php if ($prod['stock'] == 0): ?>
   <span class="badge bg-danger ms-2">No Stock</span>

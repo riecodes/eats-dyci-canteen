@@ -126,28 +126,42 @@ $status_map = [
     'void' => 'Void',
 ];
 
+// Fetch auto-void setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'auto_void_enabled'");
+$stmt->execute();
+$auto_void_enabled = $stmt->fetchColumn();
+if ($auto_void_enabled === false) {
+    // If not set, default to enabled and insert
+    $auto_void_enabled = '1';
+    $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_enabled', '1')");
+    $stmt->execute();
+}
+
 // Auto-void orders not picked up after 3 hours
-$now = new DateTime();
-foreach ($orders as &$order) {
-    $order_time = new DateTime($order['created_at']);
-    $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-    // If order placed after 3PM, void immediately
-    if ($order_time > $void_time && !in_array($order['status'], ['done', 'void'])) {
-        $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
-        $stmt->execute([$order['orderRef']]);
-        $order['status'] = 'void';
-    }
-    // If not done/void, check if should be voided
-    if (!in_array($order['status'], ['done', 'void'])) {
-        $diff = $void_time->getTimestamp() - $now->getTimestamp();
-        if ($diff <= 0) {
+if ($auto_void_enabled == '1') {
+    $now = new DateTime();
+    foreach ($orders as &$order) {
+        $order_time = new DateTime($order['created_at']);
+        $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
+        // If order placed after 3PM, void immediately
+        if ($order_time > $void_time && !in_array($order['status'], ['done', 'void'])) {
             $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
             $stmt->execute([$order['orderRef']]);
             $order['status'] = 'void';
         }
+        // If not done/void, check if should be voided
+        if (!in_array($order['status'], ['done', 'void'])) {
+            $diff = $void_time->getTimestamp() - $now->getTimestamp();
+            if ($diff <= 0) {
+                $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
+                $stmt->execute([$order['orderRef']]);
+                $order['status'] = 'void';
+            }
+        }
+        $order['void_time'] = $void_time->format(DateTime::ATOM);
     }
+    unset($order);
 }
-unset($order);
 // Sort orders oldest first
 usort($orders, function ($a, $b) {
     return strtotime($a['created_at']) <=> strtotime($b['created_at']); });
@@ -226,13 +240,13 @@ foreach ($orders as $order) {
                         <td><?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?>
                         </td>
                         <td>
-                            <?php if (!empty($order_items[$order['orderRef']])): ?>
-                                <ul class="mb-0">
-                                    <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                                        <li><?= htmlspecialchars($item['product_name']) ?> (<?= $item['quantity'] ?>pcs)</li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php endif; ?>
+                            <?php if (!empty($order_items[$order['orderRef']])) {
+                                $item_strs = [];
+                                foreach ($order_items[$order['orderRef']] as $item) {
+                                    $item_strs[] = htmlspecialchars($item['product_name']) . ' (' . $item['quantity'] . 'pcs)';
+                                }
+                                echo '<span style="font-size:0.97em;">' . implode(', ', $item_strs) . '</span>';
+                            } ?>
                         </td>
                         <td><span
                                 class="dashboard-badge <?= htmlspecialchars($order['status']) ?>">
@@ -263,23 +277,7 @@ foreach ($orders as $order) {
                         </td>
                         <td>
                             <?php if ($order['status'] === 'processed'): ?>
-                                <span class="void-timer" data-void-time="<?= htmlspecialchars($order['void_time']) ?>"></span>
-                                <noscript>
-                                <?php
-                                $order_time = new DateTime($order['created_at']);
-                                $void_time = (clone $order_time)->setTime(15, 0, 0);
-                                $now = new DateTime();
-                                $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
-                                if ($diff_sec > 0) {
-                                    $h = floor($diff_sec / 3600);
-                                    $m = floor(($diff_sec % 3600) / 60);
-                                    $s = $diff_sec % 60;
-                                    echo '<span class="badge bg-warning text-dark">Will be voided in ' . sprintf('%02d:%02d:%02d', $h, $m, $s) . '</span>';
-                                } else {
-                                    echo '<span class="badge bg-danger">Voiding...</span>';
-                                }
-                                ?>
-                                </noscript>
+                                <span class="badge bg-warning text-dark">Will void at 3PM</span>
                             <?php elseif ($order['status'] === 'void'): ?>
                                 <span class="badge bg-danger">Voided (auto)</span>
                             <?php endif; ?>
@@ -346,12 +344,13 @@ foreach ($orders as $order) {
                                             </div>
                                             <hr>
                                             <h6 class="fw-bold mb-2">Items</h6>
-                                            <ul>
-                                                <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                                                    <li><?= htmlspecialchars($item['product_name']) ?> x
-                                                        <?= $item['quantity'] ?></li>
-                                                <?php endforeach; ?>
-                                            </ul>
+                                            <?php
+                                            $item_strs = [];
+                                            foreach ($order_items[$order['orderRef']] as $item) {
+                                                $item_strs[] = htmlspecialchars($item['product_name']) . ' (' . $item['quantity'] . 'pcs)';
+                                            }
+                                            echo '<div style="font-size:1.05em;">' . implode(', ', $item_strs) . '</div>';
+                                            ?>
                                         </div>
                                     </div>
                                 </div>

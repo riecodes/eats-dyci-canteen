@@ -1,0 +1,50 @@
+Canteen Management System CSS & Design Revision Plan
+====================================================
+
+1. Adopt a Modern CSS Framework
+   - Choose and integrate Bootstrap 5 (or Tailwind CSS) as the base framework.
+   - Remove legacy/custom CSS that duplicates framework features.
+
+2. Define a Design System
+   - Establish a color palette (primary, secondary, success, danger, etc.).
+   - Select fonts and set base typography rules.
+   - Define spacing, border-radius, and shadow standards.
+   - Document button, input, card, and badge styles.
+
+3. Componentize the UI
+   - Identify and refactor repeated UI blocks (sidebar, navbar, tables, modals, forms, badges, cards).
+   - Use PHP includes/partials for shared components.
+   - Standardize markup and classes for each component.
+
+4. Make the Layout Responsive
+   - Use the framework's grid and responsive utilities for all layouts.
+   - Ensure tables, forms, and modals work on mobile and tablet.
+   - Add horizontal scrolling for wide tables on small screens.
+
+5. Improve Accessibility & Usability
+   - Use semantic HTML elements and proper label associations.
+   - Ensure color contrast meets accessibility standards.
+   - Make all interactive elements keyboard accessible.
+   - Add focus states and ARIA attributes where needed.
+
+6. Visual Polish & Consistency
+   - Add subtle transitions/animations for modals, buttons, and hover states.
+   - Use icons for actions and status (Bootstrap Icons or FontAwesome).
+   - Add whitespace and consistent padding/margins.
+   - Remove all inline styles; use classes/utilities instead.
+
+7. Organize and Optimize CSS
+   - Create a single custom.css for overrides and unique styles.
+   - Use clear, maintainable class naming (BEM or utility-first).
+   - Remove unused or redundant CSS rules.
+
+8. Test and Iterate
+   - Test all pages on major browsers and devices.
+   - Get feedback from users and stakeholders.
+   - Iterate on design based on feedback and usability testing.
+
+---
+
+Next Steps:
+- Confirm framework choice and design direction.
+- Begin with a sample page refactor (e.g., dashboard or orders page). 

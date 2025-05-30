@@ -5,6 +5,25 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 require_once __DIR__ . '/../includes/db.php';
 
+// Handle auto-void toggle
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_auto_void'])) {
+    $enabled = isset($_POST['auto_void_enabled']) ? '1' : '0';
+    $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='auto_void_enabled'");
+    $stmt->execute([$enabled]);
+    header('Location: ' . $_SERVER['REQUEST_URI']);
+    exit;
+}
+// Fetch auto-void setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'auto_void_enabled'");
+$stmt->execute();
+$auto_void_enabled = $stmt->fetchColumn();
+if ($auto_void_enabled === false) {
+    // If not set, default to enabled and insert
+    $auto_void_enabled = '1';
+    $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_enabled', '1')");
+    $stmt->execute();
+}
+
 // Get all orders (admin can see all)
 $order_stmt = $pdo->prepare("SELECT * FROM orders ORDER BY created_at DESC");
 $order_stmt->execute();
@@ -45,29 +64,31 @@ $status_map = [
 ];
 
 // Auto-void orders not picked up by 3PM same day
-$now = new DateTime();
-foreach ($orders as &$order) {
-    $order_time = new DateTime($order['created_at']);
-    $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-    // If order placed after 3PM, void immediately
-    if ($order_time > $void_time && !in_array($order['status'], ['done', 'void'])) {
-        $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
-        $stmt->execute([$order['orderRef']]);
-        $order['status'] = 'void';
-    }
-    // If not done/void, check if should be voided
-    if (!in_array($order['status'], ['done', 'void'])) {
-        $diff = $void_time->getTimestamp() - $now->getTimestamp();
-        if ($diff <= 0) {
+if ($auto_void_enabled == '1') {
+    $now = new DateTime();
+    foreach ($orders as &$order) {
+        $order_time = new DateTime($order['created_at']);
+        $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
+        // If order placed after 3PM, void immediately
+        if ($order_time > $void_time && !in_array($order['status'], ['done', 'void'])) {
             $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
             $stmt->execute([$order['orderRef']]);
             $order['status'] = 'void';
         }
+        // If not done/void, check if should be voided
+        if (!in_array($order['status'], ['done', 'void'])) {
+            $diff = $void_time->getTimestamp() - $now->getTimestamp();
+            if ($diff <= 0) {
+                $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
+                $stmt->execute([$order['orderRef']]);
+                $order['status'] = 'void';
+            }
+        }
+        // Store void_time for JS
+        $order['void_time'] = $void_time->format(DateTime::ATOM);
     }
-    // Store void_time for JS
-    $order['void_time'] = $void_time->format(DateTime::ATOM);
+    unset($order);
 }
-unset($order);
 // Sort orders oldest first
 usort($orders, function ($a, $b) {
     return strtotime($a['created_at']) <=> strtotime($b['created_at']); });
@@ -106,6 +127,13 @@ foreach ($orders as $order) {
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <div class="container-fluid px-4 pt-4">
+    <form method="post" action="" class="mb-3">
+        <label class="form-check-label">
+            <input type="checkbox" class="form-check-input" name="auto_void_enabled" value="1" <?= $auto_void_enabled == '1' ? 'checked' : '' ?>>
+            Enable 3PM Auto-Void
+        </label>
+        <button type="submit" name="save_auto_void" class="btn btn-primary btn-sm ms-2">Save</button>
+    </form>
     <div class="dashboard-section-title mb-3">All Orders</div>    
     <?php if ($status_success): ?><div class="alert alert-success mb-2"><?= $status_success ?></div><?php endif; ?>
     <?php if ($status_error): ?><div class="alert alert-danger mb-2"><?= $status_error ?></div><?php endif; ?>
