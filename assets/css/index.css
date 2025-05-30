@@ -1,6 +1,7 @@
 html, body {
     height: 100%;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .main-content {
@@ -13,6 +14,7 @@ html, body {
     flex-grow: 1;
     min-width: 0;
     overflow-y: auto;
+    overflow-x: auto;
     height: 100vh;
     box-sizing: border-box;
     padding: 1.5rem 1.5rem 5rem 1.5rem;

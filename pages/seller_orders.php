@@ -96,7 +96,7 @@ $orders = $order_stmt->fetchAll();
 $order_refs = array_column($orders, 'orderRef');
 $order_items = [];
 if ($order_refs) {
-    $in = str_repeat('?,', count($order_refs)-1) . '?';
+    $in = str_repeat('?,', count($order_refs) - 1) . '?';
     $stmt = $pdo->prepare("SELECT oi.*, p.name AS product_name FROM order_items oi JOIN products p ON oi.product_id=p.id WHERE oi.order_id IN ($in)");
     $stmt->execute($order_refs);
     foreach ($stmt->fetchAll() as $row) {
@@ -108,8 +108,8 @@ $buyers = [];
 if ($orders) {
     $buyer_ids = array_unique(array_column($orders, 'user_id'));
     if ($buyer_ids) {
-        $in = str_repeat('?,', count($buyer_ids)-1) . '?';
-        $stmt = $pdo->prepare("SELECT id, name, email FROM users WHERE id IN ($in)");
+        $in = str_repeat('?,', count($buyer_ids) - 1) . '?';
+        $stmt = $pdo->prepare("SELECT id, name, email, department, position FROM users WHERE id IN ($in)");
         $stmt->execute($buyer_ids);
         foreach ($stmt->fetchAll() as $row) {
             $buyers[$row['id']] = $row;
@@ -120,10 +120,10 @@ if ($orders) {
 // Auto-void orders not picked up after 3 hours
 $now = new DateTime();
 foreach ($orders as &$order) {
-    if (!in_array($order['status'], ['done','cancelled','void'])) {
+    if (!in_array($order['status'], ['done', 'cancelled', 'void'])) {
         $created = new DateTime($order['created_at']);
         $diff = $now->getTimestamp() - $created->getTimestamp();
-        if ($diff > 3*3600) {
+        if ($diff > 3 * 3600) {
             $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
             $stmt->execute([$order['orderRef']]);
             $order['status'] = 'void';
@@ -132,7 +132,8 @@ foreach ($orders as &$order) {
 }
 unset($order);
 // Sort orders oldest first
-usort($orders, function($a, $b) { return strtotime($a['created_at']) <=> strtotime($b['created_at']); });
+usort($orders, function ($a, $b) {
+    return strtotime($a['created_at']) <=> strtotime($b['created_at']); });
 
 // Handle edit and delete actions (move to top before HTML)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_ref'], $_POST['edit_status'])) {
@@ -164,138 +165,216 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_order_ref'])) 
     <div class="dashboard-section-title mb-3">Order Management</div>
     <div class="mb-4">
         <h5>My Payment QR Code</h5>
-        <img src="<?= $seller_qr ?>" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;">
+        <img src="<?= $seller_qr ?>" alt="Seller QR Code"
+            style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;">
         <form method="post" enctype="multipart/form-data" class="mt-2">
             <input type="file" name="qr_code" accept="image/*" required>
             <button type="submit" name="upload_qr" class="btn btn-primary btn-sm">Upload/Change QR Code</button>
         </form>
-        <?php if ($qr_success): ?><div class="alert alert-success mt-2"><?= $qr_success ?></div><?php endif; ?>
-        <?php if ($qr_error): ?><div class="alert alert-danger mt-2"><?= $qr_error ?></div><?php endif; ?>
+        <?php if ($qr_success): ?>
+            <div class="alert alert-success mt-2"><?= $qr_success ?></div><?php endif; ?>
+        <?php if ($qr_error): ?>
+            <div class="alert alert-danger mt-2"><?= $qr_error ?></div><?php endif; ?>
     </div>
-    <?php if ($status_success): ?><div class="alert alert-success mb-2"><?= $status_success ?></div><?php endif; ?>
-    <?php if ($status_error): ?><div class="alert alert-danger mb-2"><?= $status_error ?></div><?php endif; ?>
-    <div class="dashboard-table mb-4">
-    <table class="table mb-0">
-        <thead class="table-light">
-            <tr>
-                <th>Order Ref</th>
-                <th>Date</th>
-                <th>Buyer</th>
-                <th>Items</th>
-                <th>Status</th>
-                <th>Total</th>
-                <th>Receipt</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($orders as $order): ?>
-            <tr>
-                <td><?= htmlspecialchars($order['orderRef']) ?></td>
-                <td><?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></td>
-                <td><?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?></td>
-                <td>
-                    <?php if (!empty($order_items[$order['orderRef']])): ?>
-                        <ul class="mb-0">
-                        <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                            <li><?= htmlspecialchars($item['product_name']) ?> x <?= $item['quantity'] ?></li>
-                        <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
-                </td>
-                <td><span class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span></td>
-                <td>₱<?= number_format($order['total_price'],2) ?></td>
-                <td>
-                    <?php if ($order['receipt_image']): ?>
-                        <img src="<?= $order['receipt_image'] ?>" alt="Receipt" style="max-width:80px;max-height:80px;object-fit:cover;">
-                        <?php if ($order['status'] === 'queue' || $order['status'] === 'pending'): ?>
-                            <form method="post" style="display:inline">
-                                <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-outline-success">Approve Payment</button>
-                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-outline-danger" onclick="return confirm('Decline and cancel this order?')">Decline</button>
-                            </form>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <span class="text-muted">No receipt</span>
-                        <?php if ($order['status'] === 'queue' || $order['status'] === 'pending'): ?>
-                            <form method="post" style="display:inline">
-                                <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                <button type="submit" name="action" value="processing" class="btn btn-sm btn-outline-primary">Mark Processing</button>
-                                <button type="submit" name="action" value="cancelled" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this order?')">Cancel</button>
-                            </form>
-                        <?php elseif ($order['status'] === 'processing'): ?>
-                            <form method="post" style="display:inline">
-                                <input type="hidden" name="order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                <button type="submit" name="action" value="done" class="btn btn-sm btn-outline-success">Mark Done</button>
-                            </form>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-outline-info me-1" data-bs-toggle="modal" data-bs-target="#viewOrderModal<?= $order['orderRef'] ?>">View</button>
-                    <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editOrderModal<?= $order['orderRef'] ?>">Edit</button>
-                    <form method="post" style="display:inline">
-                        <input type="hidden" name="delete_order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this order?')">Delete</button>
-                    </form>
-                    <!-- View Modal -->
-                    <div class="modal fade" id="viewOrderModal<?= $order['orderRef'] ?>" tabindex="-1" aria-labelledby="viewOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="viewOrderModalLabel<?= $order['orderRef'] ?>">Order Details</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div><strong>Order Ref:</strong> <?= htmlspecialchars($order['orderRef']) ?></div>
-                                    <div><strong>Date:</strong> <?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></div>
-                                    <div><strong>Status:</strong> <?= htmlspecialchars($order['status']) ?></div>
-                                    <div><strong>Buyer:</strong> <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?> (<?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['email']) : '' ?>)</div>
-                                    <div><strong>Items:</strong>
-                                        <ul>
-                                            <?php foreach ($order_items[$order['orderRef']] as $item): ?>
-                                                <li><?= htmlspecialchars($item['product_name']) ?> x <?= $item['quantity'] ?></li>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    </div>
-                                    <div><strong>Total:</strong> ₱<?= number_format($order['total_price'],2) ?></div>
-                                    <div><strong>Receipt:</strong><br><?php if ($order['receipt_image']): ?><img src="<?= $order['receipt_image'] ?>" alt="Receipt" style="max-width:200px;max-height:200px;object-fit:cover;"><?php else: ?><span class="text-muted">No receipt</span><?php endif; ?></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Edit Modal (simple, for status only) -->
-                    <div class="modal fade" id="editOrderModal<?= $order['orderRef'] ?>" tabindex="-1" aria-labelledby="editOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="editOrderModalLabel<?= $order['orderRef'] ?>">Edit Order</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form method="post">
-                                        <input type="hidden" name="edit_order_ref" value="<?= htmlspecialchars($order['orderRef']) ?>">
-                                        <div class="mb-3">
-                                            <label class="form-label">Status</label>
-                                            <select class="form-select" name="edit_status">
-                                                <option value="queue" <?= $order['status']==='queue'?'selected':'' ?>>Queue</option>
-                                                <option value="pending" <?= $order['status']==='pending'?'selected':'' ?>>Pending</option>
-                                                <option value="processing" <?= $order['status']==='processing'?'selected':'' ?>>Processing</option>
-                                                <option value="done" <?= $order['status']==='done'?'selected':'' ?>>Done</option>
-                                                <option value="cancelled" <?= $order['status']==='cancelled'?'selected':'' ?>>Cancelled</option>
-                                                <option value="void" <?= $order['status']==='void'?'selected':'' ?>>Void</option>
-                                            </select>
+    <?php if ($status_success): ?>
+        <div class="alert alert-success mb-2"><?= $status_success ?></div><?php endif; ?>
+    <?php if ($status_error): ?>
+        <div class="alert alert-danger mb-2"><?= $status_error ?></div><?php endif; ?>
+    <div class="dashboard-table mb-4 table-responsive">
+        <table class="table mb-0" style="min-width:1100px;">
+            <thead class="table-light">
+                <tr>
+                    <th>Order Ref</th>
+                    <th>Date</th>
+                    <th>Buyer</th>
+                    <th>Items</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Receipt</th>
+                    <th>Voiding</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($orders as $order): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($order['orderRef']) ?></td>
+                        <td><?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></td>
+                        <td><?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?>
+                        </td>
+                        <td>
+                            <?php if (!empty($order_items[$order['orderRef']])): ?>
+                                <ul class="mb-0">
+                                    <?php foreach ($order_items[$order['orderRef']] as $item): ?>
+                                        <li><?= htmlspecialchars($item['product_name']) ?> (<?= $item['quantity'] ?>pcs)</li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </td>
+                        <td><span
+                                class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span>
+                        </td>
+                        <td>₱<?= number_format($order['total_price'], 2) ?></td>
+                        <td>
+                            <?php if ($order['receipt_image']): ?>
+                                <img src="<?= $order['receipt_image'] ?>" alt="Receipt"
+                                    style="max-width:80px;max-height:80px;object-fit:cover;cursor:pointer;"
+                                    data-bs-toggle="modal" data-bs-target="#receiptModal<?= $order['orderRef'] ?>">
+                                <div class="modal fade" id="receiptModal<?= $order['orderRef'] ?>" tabindex="-1"
+                                    aria-labelledby="receiptModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content bg-transparent border-0">
+                                            <div class="modal-body text-center p-0">
+                                                <img src="<?= $order['receipt_image'] ?>" alt="Receipt"
+                                                    style="max-width:90vw;max-height:90vh;object-fit:contain;box-shadow:0 0 24px #0008;border-radius:1rem;">
+                                            </div>
                                         </div>
-                                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                                    </form>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <span class="text-muted">No receipt</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php
+                            $created = new DateTime($order['created_at']);
+                            $now = new DateTime();
+                            $diff_sec = $now->getTimestamp() - $created->getTimestamp();
+                            if ($order['status'] === 'void') {
+                                echo '<span class="badge bg-danger">Voided (auto)</span>';
+                            } elseif (!in_array($order['status'], ['done', 'cancelled', 'void'])) {
+                                $left = max(0, 3 * 3600 - $diff_sec);
+                                if ($left > 0) {
+                                    $h = floor($left / 3600);
+                                    $m = floor(($left % 3600) / 60);
+                                    $s = $left % 60;
+                                    echo '<span class="badge bg-warning text-dark">Will be voided in ' . sprintf('%02d:%02d:%02d', $h, $m, $s) . '</span>';
+                                } else {
+                                    echo '<span class="badge bg-danger">Voiding...</span>';
+                                }
+                            }
+                            ?>
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                            data-bs-target="#viewOrderModal<?= $order['orderRef'] ?>">View</a></li>
+                                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                            data-bs-target="#editOrderModal<?= $order['orderRef'] ?>">Edit</a></li>
+                                    <li>
+                                        <form method="post" onsubmit="return confirm('Delete this order?')"><input
+                                                type="hidden" name="delete_order_ref"
+                                                value="<?= htmlspecialchars($order['orderRef']) ?>"><button type="submit"
+                                                class="dropdown-item text-danger">Delete</button></form>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- View Modal -->
+                            <div class="modal fade" id="viewOrderModal<?= $order['orderRef'] ?>" tabindex="-1"
+                                aria-labelledby="viewOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="viewOrderModalLabel<?= $order['orderRef'] ?>">Order
+                                                Details</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-2">
+                                                    <h6 class="fw-bold mb-2">Order Info</h6>
+                                                    <div><strong>Order Ref:</strong>
+                                                        <?= htmlspecialchars($order['orderRef']) ?></div>
+                                                    <div><strong>Date:</strong>
+                                                        <?= date('Y-m-d H:i', strtotime($order['created_at'])) ?></div>
+                                                    <div><strong>Status:</strong> <span
+                                                            class="dashboard-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span>
+                                                    </div>
+                                                    <div><strong>Total:</strong>
+                                                        ₱<?= number_format($order['total_price'], 2) ?></div>
+                                                    <div>
+                                                        <strong>Receipt:</strong><br><?php if ($order['receipt_image']): ?><img
+                                                                src="<?= $order['receipt_image'] ?>" alt="Receipt"
+                                                                style="max-width:180px;max-height:180px;object-fit:cover;"
+                                                                class="rounded border"><?php else: ?><span class="text-muted">No
+                                                                receipt</span><?php endif; ?></div>
+                                                </div>
+                                                <div class="col-md-6 mb-2">
+                                                    <h6 class="fw-bold mb-2">Buyer Info</h6>
+                                                    <div><strong>Name:</strong>
+                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['name']) : 'N/A' ?>
+                                                    </div>
+                                                    <div><strong>Email:</strong>
+                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['email']) : '' ?>
+                                                    </div>
+                                                    <div><strong>Department:</strong>
+                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['department'] ?? '-') : '-' ?>
+                                                    </div>
+                                                    <div><strong>Position:</strong>
+                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['position'] ?? '-') : '-' ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <hr>
+                                            <h6 class="fw-bold mb-2">Items</h6>
+                                            <ul>
+                                                <?php foreach ($order_items[$order['orderRef']] as $item): ?>
+                                                    <li><?= htmlspecialchars($item['product_name']) ?> x
+                                                        <?= $item['quantity'] ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-        </tbody>
-    </table>
+                            <!-- Edit Modal (simple, for status only) -->
+                            <div class="modal fade" id="editOrderModal<?= $order['orderRef'] ?>" tabindex="-1"
+                                aria-labelledby="editOrderModalLabel<?= $order['orderRef'] ?>" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editOrderModalLabel<?= $order['orderRef'] ?>">Edit
+                                                Order</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form method="post">
+                                                <input type="hidden" name="edit_order_ref"
+                                                    value="<?= htmlspecialchars($order['orderRef']) ?>">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Status</label>
+                                                    <select class="form-select" name="edit_status">
+                                                        <option value="queue" <?= $order['status'] === 'queue' ? 'selected' : '' ?>>Queue</option>
+                                                        <option value="pending"
+                                                            <?= $order['status'] === 'pending' ? 'selected' : '' ?>>Pending
+                                                        </option>
+                                                        <option value="processing"
+                                                            <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing
+                                                        </option>
+                                                        <option value="done" <?= $order['status'] === 'done' ? 'selected' : '' ?>>
+                                                            Done</option>
+                                                        <option value="cancelled"
+                                                            <?= $order['status'] === 'cancelled' ? 'selected' : '' ?>>Cancelled
+                                                        </option>
+                                                        <option value="void" <?= $order['status'] === 'void' ? 'selected' : '' ?>>
+                                                            Void</option>
+                                                    </select>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
-</div> 
+</div>

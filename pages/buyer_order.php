@@ -193,14 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
 // Show canteens as cards at the top
 if (!$selected_canteen) {
-    echo '<div class="row g-4 mb-4">';
+    echo '<div class="dashboard-section-title mb-3">Canteens</div>';
+    echo '<div class="row dashboard-cards g-4 mb-4">';
     foreach ($canteens as $canteen) {
-        echo '<div class="col-md-4">';
-        echo '<div class="card h-100 shadow-sm">';
+        echo '<div class="col-md-4 mb-3">';
+        echo '<div class="dashboard-card h-100">';
         $img = htmlspecialchars($canteen['image'] ?? '../assets/imgs/canteen-default.jpg');
-        echo '<img src="' . $img . '" class="card-img-top" alt="Canteen Image" style="max-height:200px;object-fit:cover;">';
-        echo '<div class="card-body">';
-        echo '<h5 class="card-title">' . htmlspecialchars($canteen['name']) . '</h5>';
+        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Canteen Image" style="aspect-ratio:1/1; width:100%; max-width:180px; object-fit:cover; border-radius:1rem;">';
+        echo '<div class="card-body p-0">';
+        echo '<h5 class="card-title mb-2">' . htmlspecialchars($canteen['name']) . '</h5>';
         echo '<form method="get" action="index.php">';
         echo '<input type="hidden" name="page" value="buyer_order">';
         echo '<input type="hidden" name="canteen_id" value="' . $canteen['id'] . '">';
@@ -209,25 +210,24 @@ if (!$selected_canteen) {
         echo '</div></div></div>';
     }
     echo '</div>';
-    // Stop here if no canteen selected
     return;
 }
 
 // After canteen selection, show all stalls for the selected canteen as cards
 if ($selected_canteen && !$selected_stall) {
-    // Fetch stalls for selected canteen
+    echo '<div class="dashboard-section-title mb-3">Stalls</div>';
     $stmt = $pdo->prepare('SELECT * FROM stalls WHERE canteen_id = ? ORDER BY name ASC');
     $stmt->execute([$selected_canteen]);
     $stalls = $stmt->fetchAll();
-    echo '<div class="row g-4 mb-4">';
+    echo '<div class="row dashboard-cards g-4 mb-4">';
     foreach ($stalls as $stall) {
-        echo '<div class="col-md-4">';
-        echo '<div class="card h-100 shadow-sm">';
+        echo '<div class="col-md-4 mb-3">';
+        echo '<div class="dashboard-card h-100">';
         $img = htmlspecialchars($stall['image'] ?? '../assets/imgs/stall-default.jpg');
-        echo '<img src="' . $img . '" class="card-img-top" alt="Stall Image" style="max-height:200px;object-fit:cover;">';
-        echo '<div class="card-body">';
-        echo '<h5 class="card-title">' . htmlspecialchars($stall['name']) . '</h5>';
-        echo '<p class="card-text">' . htmlspecialchars($stall['description'] ?? '') . '</p>';
+        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Stall Image" style="aspect-ratio:1/1; width:100%; max-width:180px; object-fit:cover; border-radius:1rem;">';
+        echo '<div class="card-body p-0">';
+        echo '<h5 class="card-title mb-2">' . htmlspecialchars($stall['name']) . '</h5>';
+        echo '<p class="card-text mb-2">' . htmlspecialchars($stall['description'] ?? '') . '</p>';
         echo '<form method="get" action="index.php">';
         echo '<input type="hidden" name="page" value="buyer_order">';
         echo '<input type="hidden" name="canteen_id" value="' . $selected_canteen . '">';
@@ -237,24 +237,23 @@ if ($selected_canteen && !$selected_stall) {
         echo '</div></div></div>';
     }
     echo '</div>';
-    // Stop here if no stall selected
     return;
 }
 
 // After stall selection, show all products for the selected stall as cards
 if ($selected_canteen && $selected_stall) {
-    // Fetch products for selected stall
+    echo '<div class="dashboard-section-title mb-3">Products</div>';
     $stmt = $pdo->prepare('SELECT * FROM products WHERE stall_id = ? ORDER BY name ASC');
     $stmt->execute([$selected_stall]);
     $products = $stmt->fetchAll();
-    echo '<div class="row g-4 mb-4">';
+    echo '<div class="row dashboard-cards g-4 mb-4">';
     foreach ($products as $product) {
         if ((int)$product['stock'] <= 0) continue;
-        echo '<div class="col-md-4">';
-        echo '<div class="card h-100 shadow-sm">';
+        echo '<div class="col-md-4 mb-3">';
+        echo '<div class="dashboard-card h-100">';
         $img = htmlspecialchars($product['image'] ?? '../assets/imgs/product-default.jpg');
-        echo '<img src="' . $img . '" class="card-img-top" alt="Product Image" style="max-height:180px;object-fit:cover;">';
-        echo '<div class="card-body">';
+        echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Product Image" style="aspect-ratio:1/1; width:100%; max-width:180px; object-fit:cover; border-radius:1rem;">';
+        echo '<div class="card-body p-0">';
         echo '<h6 class="card-title mb-1">' . htmlspecialchars($product['name']) . '</h6>';
         echo '<div class="mb-1 text-muted">₱' . number_format($product['price'],2) . '</div>';
         echo '<div class="mb-2 small">Stock: ' . (int)$product['stock'] . '</div>';
@@ -270,16 +269,18 @@ if ($selected_canteen && $selected_stall) {
     echo '</div>';
     // Cart and checkout section
     if (!empty($cart)) {
-        // Fetch seller QR code
-        $stmt = $pdo->prepare('SELECT s.seller_id, u.qr_code FROM stalls s JOIN users u ON s.seller_id = u.id WHERE s.id = ?');
-        $stmt->execute([$selected_stall]);
-        $seller = $stmt->fetch();
-        $seller_qr = $seller['qr_code'] ?? '../assets/imgs/qrcode-placeholder.jpg';
-        // Cart summary
+        // Feedback/notification above cart
+        if (!empty($cart_success)) {
+            echo '<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">' . htmlspecialchars($cart_success) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        }
+        if (!empty($cart_error)) {
+            echo '<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">' . htmlspecialchars($cart_error) . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>';
+        }
         echo '<div class="mt-4">';
         echo '<h5>Your Cart</h5>';
         echo '<form method="post" enctype="multipart/form-data">';
-        echo '<table class="table table-bordered align-middle">';
+        echo '<div class="dashboard-table mb-4">';
+        echo '<table class="table mb-0">';
         echo '<thead class="table-light"><tr><th>Product</th><th>Price</th><th>Quantity</th><th>Subtotal</th><th>Action</th></tr></thead><tbody>';
         $total = 0;
         foreach ($cart as $product_id => $qty) {
@@ -299,15 +300,21 @@ if ($selected_canteen && $selected_stall) {
             echo '</tr>';
         }
         echo '</tbody><tfoot><tr><th colspan="3" class="text-end">Total</th><th colspan="2">₱' . number_format($total,2) . '</th></tr></tfoot></table>';
+        echo '</div>';
         echo '<button type="submit" name="update_cart" class="btn btn-secondary">Update Cart</button> ';
         echo '<button type="submit" name="proceed_checkout" class="btn btn-primary">Proceed to Checkout</button>';
         echo '</form>';
         echo '</div>';
         // Checkout section
         if (isset($_POST['proceed_checkout']) && empty($order_success)) {
+            // Fetch seller QR code
+            $stmt = $pdo->prepare('SELECT s.seller_id, u.qr_code FROM stalls s JOIN users u ON s.seller_id = u.id WHERE s.id = ?');
+            $stmt->execute([$selected_stall]);
+            $seller = $stmt->fetch();
+            $seller_qr = $seller['qr_code'] ?? '../assets/imgs/qrcode-placeholder.jpg';
             echo '<div class="mt-4">';
             echo '<h5>Checkout</h5>';
-            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;cursor:pointer;" onclick="showQrModal(this.src)">';
+            echo '<div class="mb-3">Seller GCash QR Code:<br><img src="' . htmlspecialchars($seller_qr) . '" alt="Seller QR Code" style="max-width:200px;max-height:200px;object-fit:contain;border:1px solid #ccc;background:#fff;cursor:pointer;aspect-ratio:1/1;" onclick="showQrModal(this.src)">';
             echo '<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">';
             echo '<div class="modal-dialog modal-dialog-centered">';
             echo '<div class="modal-content bg-transparent border-0">';
@@ -318,13 +325,23 @@ if ($selected_canteen && $selected_stall) {
             echo '</div>';
             echo '</div>';
             echo '</div>';
+            echo '<form method="post" enctype="multipart/form-data">';
+            echo '<div class="mb-3">';
+            echo '<label class="form-label">Upload Receipt (portrait only)</label>';
+            echo '<input type="file" class="form-control" name="receipt_image" accept="image/*" required>';
+            echo '</div>';
+            echo '<div class="mb-3">';
+            echo '<label class="form-label">Note (optional)</label>';
+            echo '<textarea class="form-control" name="order_note" rows="2" placeholder="Add a note for the seller..."></textarea>';
+            echo '</div>';
+            echo '<button type="submit" name="place_order" class="btn btn-success">Place Order</button>';
+            echo '</form>';
             echo '<script>';
             echo 'function showQrModal(src) {';
-            echo '  var modal = new bootstrap.Modal(document.getElementById(\'qrModal\'));';
-            echo '  document.getElementById(\'qrModalImg\').src = src;';
-            echo '  modal.show();';
-            echo '}';
-            echo '// Enforce max=5 on all cart quantity inputs';
+            echo '  var modal = new bootstrap.Modal(document.getElementById(\'qrModal\'));
+  document.getElementById(\'qrModalImg\').src = src;
+  modal.show();
+}';
             echo 'window.addEventListener(\'DOMContentLoaded\', function() {';
             echo '  document.querySelectorAll(\'input[type=number][name^=quantities], input[type=number][name=quantity]\').forEach(function(input) {';
             echo '    input.addEventListener(\'input\', function() {';
@@ -364,4 +381,3 @@ if (!empty($cart_success)): ?>
     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
 <?php endif; ?>
-?> 

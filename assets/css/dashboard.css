@@ -132,7 +132,7 @@ body {
     border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(23, 14, 99, 0.06);
     margin-bottom: 1.5rem;
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .dashboard-table table {
