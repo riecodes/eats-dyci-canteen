@@ -137,22 +137,32 @@ if ($auto_void_enabled === false) {
     $stmt->execute();
 }
 
+// Fetch auto-void time setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'auto_void_time'");
+$stmt->execute();
+$auto_void_time = $stmt->fetchColumn();
+if ($auto_void_time === false) {
+    $auto_void_time = '15:00:00';
+    $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_time', '15:00:00')");
+    $stmt->execute();
+}
+
 // Auto-void orders not picked up after 3 hours
 if ($auto_void_enabled == '1') {
-    $now = new DateTime();
+    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
     foreach ($orders as &$order) {
-        $order_time = new DateTime($order['created_at']);
-        $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-        // If order placed after 3PM, void immediately
-        if ($order_time > $void_time && !in_array($order['status'], ['done', 'void'])) {
+        $order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
+        list($h, $m, $s) = explode(':', $auto_void_time);
+        $void_time = (clone $order_time)->setTime((int)$h, (int)$m, (int)$s);
+        // If order placed after auto-void time, void immediately
+        if ($order_time->format('H:i:s') > $auto_void_time && !in_array($order['status'], ['done', 'void'])) {
             $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
             $stmt->execute([$order['orderRef']]);
             $order['status'] = 'void';
         }
-        // If not done/void, check if should be voided
-        if (!in_array($order['status'], ['done', 'void'])) {
-            $diff = $void_time->getTimestamp() - $now->getTimestamp();
-            if ($diff <= 0) {
+        // If not done/void, check if should be voided (current time after auto-void time)
+        elseif (!in_array($order['status'], ['done', 'void'])) {
+            if ($now > $void_time) {
                 $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
                 $stmt->execute([$order['orderRef']]);
                 $order['status'] = 'void';
@@ -276,8 +286,25 @@ foreach ($orders as $order) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($order['status'] === 'processed'): ?>
-                                <span class="badge bg-warning text-dark">Will void at 3PM</span>
+                            <?php if ($auto_void_enabled == '1' && $order['status'] === 'processed'): ?>
+                                <span class="void-timer" data-void-time="<?= htmlspecialchars($order['void_time']) ?>"></span>
+                                <noscript>
+                                <?php
+                                $order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
+                                list($h, $m, $s) = explode(':', $auto_void_time);
+                                $void_time = (clone $order_time)->setTime((int)$h, (int)$m, (int)$s);
+                                $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
+                                $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
+                                if ($diff_sec > 0) {
+                                    $h = floor($diff_sec / 3600);
+                                    $m = floor(($diff_sec % 3600) / 60);
+                                    $s = $diff_sec % 60;
+                                    echo '<span class="badge bg-warning text-dark">Will be voided in ' . sprintf('%02d:%02d:%02d', $h, $m, $s) . '</span>';
+                                } else {
+                                    echo '<span class="badge bg-danger">Voiding...</span>';
+                                }
+                                ?>
+                                </noscript>
                             <?php elseif ($order['status'] === 'void'): ?>
                                 <span class="badge bg-danger">Voided (auto)</span>
                             <?php endif; ?>
@@ -393,3 +420,26 @@ foreach ($orders as $order) {
         </table>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function updateTimers() {
+    document.querySelectorAll('.void-timer').forEach(function(span) {
+      var voidTime = new Date(span.getAttribute('data-void-time'));
+      var now = new Date();
+      var diff = Math.floor((voidTime - now) / 1000);
+      if (diff > 0) {
+        var h = Math.floor(diff / 3600);
+        var m = Math.floor((diff % 3600) / 60);
+        var s = diff % 60;
+        span.textContent = 'Will be voided in ' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        span.className = 'void-timer badge bg-warning text-dark';
+      } else {
+        span.textContent = 'Voiding...';
+        span.className = 'void-timer badge bg-danger';
+      }
+    });
+  }
+  setInterval(updateTimers, 1000);
+  updateTimers();
+});
+</script>

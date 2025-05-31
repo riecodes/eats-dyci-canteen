@@ -339,6 +339,7 @@ if ($selected_canteen && $selected_stall) {
             echo '</div>';
             echo '</div>';
             echo '</div>';
+            echo '</div>';
             echo '<form method="post" enctype="multipart/form-data">';
             echo '<div class="mb-3">';
             echo '<label class="form-label">Upload Receipt (portrait only)</label>';
@@ -373,4 +374,48 @@ if ($selected_canteen && $selected_stall) {
 // Show error feedback if not portrait
 if (!empty($order_error)) {
     echo '<div class="alert alert-danger">' . htmlspecialchars($order_error) . '</div>';
+}
+
+// Success/Error Modal after placing order
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['place_order']) || isset($_POST['proceed_checkout']))) {
+    echo '<div class="modal fade" id="orderResultModal" tabindex="-1" aria-labelledby="orderResultModalLabel" aria-hidden="true">';
+    echo '<div class="modal-dialog">';
+    echo '<div class="modal-content">';
+    echo '<div class="modal-header">';
+    if (!empty($order_success)) {
+        echo '<h5 class="modal-title text-success" id="orderResultModalLabel">Order Placed Successfully!</h5>';
+    } else {
+        echo '<h5 class="modal-title text-danger" id="orderResultModalLabel">Order Failed</h5>';
+    }
+    echo '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>';
+    echo '</div>';
+    echo '<div class="modal-body">';
+    if (!empty($order_success)) {
+        // Show order details
+        if (isset($orderRef)) {
+            echo '<div><strong>Order Reference:</strong> ' . htmlspecialchars($orderRef) . '</div>';
+        }
+        if (!empty($cart_products)) {
+            echo '<div class="mt-2"><strong>Items:</strong><ul>';
+            foreach ($cart_products as $prod) {
+                $qty = isset($cart[$prod['id']]) ? $cart[$prod['id']] : 1;
+                echo '<li>' . htmlspecialchars($prod['name']) . ' x ' . $qty . '</li>';
+            }
+            echo '</ul></div>';
+        }
+        if (isset($total_price)) {
+            echo '<div><strong>Total:</strong> ₱' . number_format($total_price, 2) . '</div>';
+        }
+        echo '<div class="alert alert-success mt-3">' . htmlspecialchars($order_success) . '</div>';
+    } else if (!empty($order_error)) {
+        echo '<div class="alert alert-danger">' . htmlspecialchars($order_error) . '</div>';
+    }
+    echo '</div>';
+    echo '<div class="modal-footer">';
+    echo '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>';
+    echo '</div>';
+    echo '</div>';
+    echo '</div>';
+    echo '</div>';
+    echo '<script>document.addEventListener("DOMContentLoaded",function(){var m=new bootstrap.Modal(document.getElementById("orderResultModal"));m.show();});</script>';
 }

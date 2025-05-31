@@ -5,11 +5,22 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 require_once __DIR__ . '/../includes/db.php';
 
-// Handle auto-void toggle
+// Handle auto-void toggle and time
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_auto_void'])) {
     $enabled = isset($_POST['auto_void_enabled']) ? '1' : '0';
+    $void_time = isset($_POST['auto_void_time']) ? $_POST['auto_void_time'] : '15:00:00';
     $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='auto_void_enabled'");
     $stmt->execute([$enabled]);
+    // Save or insert auto_void_time
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE name='auto_void_time'");
+    $stmt->execute();
+    if ($stmt->fetchColumn() == 0) {
+        $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_time', ?)");
+        $stmt->execute([$void_time]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='auto_void_time'");
+        $stmt->execute([$void_time]);
+    }
     header('Location: ' . $_SERVER['REQUEST_URI']);
     exit;
 }
@@ -21,6 +32,15 @@ if ($auto_void_enabled === false) {
     // If not set, default to enabled and insert
     $auto_void_enabled = '1';
     $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_enabled', '1')");
+    $stmt->execute();
+}
+// Fetch auto-void time setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'auto_void_time'");
+$stmt->execute();
+$auto_void_time = $stmt->fetchColumn();
+if ($auto_void_time === false) {
+    $auto_void_time = '15:00:00';
+    $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_time', '15:00:00')");
     $stmt->execute();
 }
 
@@ -65,20 +85,20 @@ $status_map = [
 
 // Auto-void orders not picked up by 3PM same day
 if ($auto_void_enabled == '1') {
-    $now = new DateTime();
+    $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
     foreach ($orders as &$order) {
-        $order_time = new DateTime($order['created_at']);
-        $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-        // If order placed after 3PM, void immediately
-        if ($order_time > $void_time && !in_array($order['status'], ['done', 'void'])) {
+        $order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
+        list($h, $m) = explode(':', $auto_void_time);
+        $void_time = (clone $order_time)->setTime((int)$h, (int)$m, 0);
+        // If order placed after auto-void time, void immediately
+        if ($order_time->format('H:i:s') > $auto_void_time && !in_array($order['status'], ['done', 'void'])) {
             $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
             $stmt->execute([$order['orderRef']]);
             $order['status'] = 'void';
         }
-        // If not done/void, check if should be voided
-        if (!in_array($order['status'], ['done', 'void'])) {
-            $diff = $void_time->getTimestamp() - $now->getTimestamp();
-            if ($diff <= 0) {
+        // If not done/void, check if should be voided (current time after auto-void time)
+        elseif (!in_array($order['status'], ['done', 'void'])) {
+            if ($now > $void_time) {
                 $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
                 $stmt->execute([$order['orderRef']]);
                 $order['status'] = 'void';
@@ -130,8 +150,9 @@ foreach ($orders as $order) {
     <form method="post" action="" class="mb-3">
         <label class="form-check-label">
             <input type="checkbox" class="form-check-input" name="auto_void_enabled" value="1" <?= $auto_void_enabled == '1' ? 'checked' : '' ?>>
-            Enable 3PM Auto-Void
+            Enable auto-void at
         </label>
+        <input type="time" name="auto_void_time" value="<?= htmlspecialchars(substr($auto_void_time,0,5)) ?>" class="form-control d-inline-block" style="width:135px; margin-left:8px; margin-right:8px; vertical-align:middle;" required>
         <button type="submit" name="save_auto_void" class="btn btn-primary btn-sm ms-2">Save</button>
     </form>
     <div class="dashboard-section-title mb-3">All Orders</div>    
@@ -198,13 +219,14 @@ foreach ($orders as $order) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($order['status'] === 'processed'): ?>
+                            <?php if ($auto_void_enabled == '1' && $order['status'] === 'processed'): ?>
                                 <span class="void-timer" data-void-time="<?= htmlspecialchars($order['void_time']) ?>"></span>
                                 <noscript>
                                 <?php
-                                $order_time = new DateTime($order['created_at']);
-                                $void_time = (clone $order_time)->setTime(15, 0, 0);
-                                $now = new DateTime();
+                                $order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
+                                list($h, $m) = explode(':', $auto_void_time);
+                                $void_time = (clone $order_time)->setTime((int)$h, (int)$m, 0);
+                                $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
                                 $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
                                 if ($diff_sec > 0) {
                                     $h = floor($diff_sec / 3600);
@@ -355,8 +377,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <!-- Voiding time calculation code (PHP):
-$order_time = new DateTime($order['created_at']);
+$order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
 $void_time = (clone $order_time)->setTime(15, 0, 0); // 3PM same day
-$now = new DateTime();
+$now = new DateTime('now', new DateTimeZone('Asia/Manila'));
 $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
 --> 
