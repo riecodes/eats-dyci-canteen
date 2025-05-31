@@ -29,6 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
     $stall_id = $_POST['stall_id'] ?? null;
     $image_url = null;
     $stock = intval($_POST['stock'] ?? 0);
+    // Validate category_id
+    if ($category_id) {
+        $cat_check = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND seller_id = ?");
+        $cat_check->execute([$category_id, $seller_id]);
+        if (!$cat_check->fetch()) {
+            $category_id = null;
+        }
+    } else {
+        $category_id = null;
+    }
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
@@ -71,6 +81,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
     $edit_category_id = $_POST['edit_category_id'] ?? null;
     $edit_image_url = null;
     $edit_stock = intval($_POST['edit_stock'] ?? 0);
+    // Validate category_id
+    if ($edit_category_id) {
+        $cat_check = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND seller_id = ?");
+        $cat_check->execute([$edit_category_id, $seller_id]);
+        if (!$cat_check->fetch()) {
+            $edit_category_id = null;
+        }
+    } else {
+        $edit_category_id = null;
+    }
     if (isset($_FILES['edit_image']) && $_FILES['edit_image']['error'] === UPLOAD_ERR_OK) {
         $ext = pathinfo($_FILES['edit_image']['name'], PATHINFO_EXTENSION);
         $target = '../assets/imgs/products_' . uniqid() . '.' . $ext;
@@ -96,9 +116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_product_id'])) {
     }
 }
 
-// Get all categories globally
-$cat_stmt = $pdo->prepare("SELECT * FROM categories");
-$cat_stmt->execute();
+// Get all categories for this seller only
+$cat_stmt = $pdo->prepare("SELECT * FROM categories WHERE seller_id = ?");
+$cat_stmt->execute([$seller_id]);
 $categories = $cat_stmt->fetchAll();
 // Get all products for the seller's stalls
 $prod_stmt = $pdo->prepare("SELECT * FROM products WHERE stall_id IN (" . implode(',', $stall_ids) . ")");
@@ -122,7 +142,6 @@ $products = $prod_stmt->fetchAll();
     <table class="table mb-0">
         <thead class="table-light">
             <tr>
-                <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Price</th>
@@ -134,8 +153,7 @@ $products = $prod_stmt->fetchAll();
         </thead>
         <tbody>
         <?php foreach ($products as $prod): ?>
-            <tr>
-                <td><?= $prod['id'] ?></td>
+            <tr>                
                 <td><?= htmlspecialchars($prod['name']) ?></td>
                 <td><?= htmlspecialchars($prod['description']) ?></td>
                 <td>₱<?= number_format($prod['price'],2) ?></td>

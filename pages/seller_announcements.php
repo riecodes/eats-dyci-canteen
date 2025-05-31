@@ -111,27 +111,20 @@ function get_stall($a, $all_stalls) {
 ?>
 <link rel="stylesheet" href="../assets/css/dashboard.css">
 <style>
-.announcement-feed {
-  max-width: 600px;
-  margin: 0 auto;
-  padding-bottom: 2rem;
-}
-.announcement-card {
-  background: #fff;
-  border-radius: 1.2rem;
-  box-shadow: 0 4px 16px rgba(23, 14, 99, 0.08);
-  margin-bottom: 2rem;
-  padding: 1.5rem 1.5rem 1rem 1.5rem;
-  transition: box-shadow 0.2s;
-  position: relative;
-}
-.announcement-card:hover {
-  box-shadow: 0 8px 24px rgba(23, 14, 99, 0.13);
-}
-.card-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 0.7rem;
+.announcement-post {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(23, 14, 99, 0.06);
+    padding: 1.1rem 1.2rem 0.8rem 1.2rem;
+    margin-bottom: 1.2rem;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
 }
 .avatar {
   width: 44px;
@@ -149,50 +142,52 @@ function get_stall($a, $all_stalls) {
   text-transform: uppercase;
   letter-spacing: 1px;
 }
-.author {
-  font-weight: 600;
-  color: #170e63;
-  font-size: 1.08rem;
+.announcement-post .author {
+    font-weight: 600;
+    color: #170e63;
+    margin-bottom: 0.1rem;
+    align-self: center;
 }
-.meta {
-  font-size: 0.97rem;
-  color: #888;
-  margin-top: 2px;
+.announcement-post .meta {
+    font-size: 0.97rem;
+    color: #888;
+    margin-bottom: 0.2rem;
+    align-self: center;
 }
-.card-title {
-  font-size: 1.18rem;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  color: #170e63;
+.announcement-post .type-badge {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    border-radius: 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: #fff;
 }
-.card-message {
-  font-size: 1.05rem;
-  margin-bottom: 0.7rem;
-  white-space: pre-line;
-  color: #222;
+.announcement-post .type-info { background: #0dcaf0; }
+.announcement-post .type-warning { background: #fd7e14; }
+.announcement-post .type-promo { background: #198754; }
+.announcement-post .post-image {
+    max-width: 100%;
+    max-height: 220px;
+    border-radius: 0.7rem;
+    margin: 0.5rem 0 0.3rem 0;
+    object-fit: cover;
+    display: block;
+    align-self: center;
 }
-.card-image {
-  max-width: 100%;
-  max-height: 260px;
-  border-radius: 0.8rem;
-  margin: 0.7rem 0;
-  object-fit: cover;
-  display: block;
-  box-shadow: 0 2px 8px rgba(23, 14, 99, 0.08);
+.announcement-post .post-title {
+    font-size: 1.13rem;
+    font-weight: 700;
+    margin-bottom: 0.18rem;
+    color: #170e63;
+    align-self: center;
 }
-.type-badge {
-  display: inline-block;
-  padding: 0.22rem 0.85rem;
-  border-radius: 1rem;
-  font-size: 0.89rem;
-  font-weight: 600;
-  margin-left: 0.5rem;
-  color: #fff;
-  vertical-align: middle;
+.announcement-post .post-message {
+    font-size: 1.01rem;
+    margin-bottom: 0.2rem;
+    white-space: pre-line;
+    align-self: center;
 }
-.type-info { background: #0dcaf0; }
-.type-warning { background: #fd7e14; }
-.type-promo { background: #198754; }
 .card-actions {
   margin-top: 0.7rem;
   display: flex;
@@ -238,8 +233,8 @@ function get_stall($a, $all_stalls) {
   </div>
   <div class="announcement-feed">
     <?php foreach ($announcements as $a): ?>
-      <div class="announcement-card">
-        <div class="card-header">
+      <div class="announcement-post">
+        <div class="card-header" style="display:flex;align-items:center;gap:0.7rem;">
           <div class="avatar">
             <?= empty($a['seller_id']) ? 'A' : strtoupper(substr($sellers[$a['seller_id']] ?? 'S', 0, 1)) ?>
           </div>
@@ -256,10 +251,10 @@ function get_stall($a, $all_stalls) {
             </div>
           </div>
         </div>
-        <div class="card-title"><?= htmlspecialchars($a['title']) ?></div>
-        <div class="card-message"><?= nl2br(htmlspecialchars($a['message'])) ?></div>
+        <div class="post-title"><?= htmlspecialchars($a['title']) ?></div>
+        <div class="post-message"><?= nl2br(htmlspecialchars($a['message'])) ?></div>
         <?php if (!empty($a['image'])): ?>
-          <img src="<?= htmlspecialchars($a['image']) ?>" class="card-image" alt="Announcement Image">
+          <img src="<?= htmlspecialchars($a['image']) ?>" class="post-image" alt="Announcement Image">
         <?php endif; ?>
         <?php if (!empty($a['seller_id']) && $a['seller_id'] == $seller_id): ?>
         <div class="card-actions">

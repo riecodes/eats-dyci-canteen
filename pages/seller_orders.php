@@ -150,10 +150,10 @@ if ($auto_void_time === false) {
 // Auto-void orders not picked up after 3 hours
 if ($auto_void_enabled == '1') {
     $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
-    foreach ($orders as &$order) {
+foreach ($orders as &$order) {
         $order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
-        list($h, $m, $s) = explode(':', $auto_void_time);
-        $void_time = (clone $order_time)->setTime((int)$h, (int)$m, (int)$s);
+        list($h, $m) = explode(':', $auto_void_time);
+        $void_time = (clone $order_time)->setTime((int)$h, (int)$m, 0);
         // If order placed after auto-void time, void immediately
         if ($order_time->format('H:i:s') > $auto_void_time && !in_array($order['status'], ['done', 'void'])) {
             $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
@@ -163,14 +163,14 @@ if ($auto_void_enabled == '1') {
         // If not done/void, check if should be voided (current time after auto-void time)
         elseif (!in_array($order['status'], ['done', 'void'])) {
             if ($now > $void_time) {
-                $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
-                $stmt->execute([$order['orderRef']]);
-                $order['status'] = 'void';
-            }
+            $stmt = $pdo->prepare("UPDATE orders SET status='void' WHERE orderRef=?");
+            $stmt->execute([$order['orderRef']]);
+            $order['status'] = 'void';
         }
-        $order['void_time'] = $void_time->format(DateTime::ATOM);
     }
-    unset($order);
+        $order['void_time'] = $void_time->format(DateTime::ATOM);
+}
+unset($order);
 }
 // Sort orders oldest first
 usort($orders, function ($a, $b) {
@@ -289,10 +289,10 @@ foreach ($orders as $order) {
                             <?php if ($auto_void_enabled == '1' && $order['status'] === 'processed'): ?>
                                 <span class="void-timer" data-void-time="<?= htmlspecialchars($order['void_time']) ?>"></span>
                                 <noscript>
-                                <?php
+                            <?php
                                 $order_time = new DateTime($order['created_at'], new DateTimeZone('Asia/Manila'));
-                                list($h, $m, $s) = explode(':', $auto_void_time);
-                                $void_time = (clone $order_time)->setTime((int)$h, (int)$m, (int)$s);
+                                list($h, $m) = explode(':', $auto_void_time);
+                                $void_time = (clone $order_time)->setTime((int)$h, (int)$m, 0);
                                 $now = new DateTime('now', new DateTimeZone('Asia/Manila'));
                                 $diff_sec = $void_time->getTimestamp() - $now->getTimestamp();
                                 if ($diff_sec > 0) {
@@ -302,8 +302,8 @@ foreach ($orders as $order) {
                                     echo '<span class="badge bg-warning text-dark">Will be voided in ' . sprintf('%02d:%02d:%02d', $h, $m, $s) . '</span>';
                                 } else {
                                     echo '<span class="badge bg-danger">Voiding...</span>';
-                                }
-                                ?>
+                            }
+                            ?>
                                 </noscript>
                             <?php elseif ($order['status'] === 'void'): ?>
                                 <span class="badge bg-danger">Voided (auto)</span>
@@ -404,7 +404,7 @@ foreach ($orders as $order) {
                                                         <option value="processing" <?= $order['status'] === 'processing' ? 'selected' : '' ?>>Processing</option>
                                                         <option value="processed" <?= $order['status'] === 'processed' ? 'selected' : '' ?>>Processed</option>
                                                         <option value="done" <?= $order['status'] === 'done' ? 'selected' : '' ?>>Done</option>
-                                                        <option value="void" <?= $order['status'] === 'void' ? 'selected' : '' ?>>Void</option>
+                                                         <option value="void" <?= $order['status'] === 'void' ? 'selected' : '' ?>>Void</option>
                                                     </select>
                                                 </div>
                                                 <button type="submit" class="btn btn-primary">Save Changes</button>

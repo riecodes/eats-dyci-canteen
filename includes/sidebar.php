@@ -18,6 +18,7 @@
             <li><a href="index.php?page=admin_orders" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_orders' ? 'active' : ''; ?>"><i class="fas fa-receipt me-2 sidebar-icon-admin"></i>Orders</a></li>
             <li><a href="index.php?page=admin_stalls" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_stalls' ? 'active' : ''; ?>"><i class="fas fa-store-alt me-2 sidebar-icon-admin"></i>Stalls</a></li>
             <li><a href="index.php?page=admin_products" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_products' ? 'active' : ''; ?>"><i class="fas fa-box-open me-2 sidebar-icon-admin"></i>Product</a></li>
+            <li><a href="index.php?page=admin_categories" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_categories' ? 'active' : ''; ?>"><i class="fas fa-tags me-2 sidebar-icon-admin"></i>Categories</a></li>
             <li><a href="index.php?page=admin_announcements" class="nav-link <?php echo ($_GET['page'] ?? '') === 'admin_announcements' ? 'active' : ''; ?>">
                 <i class="fas fa-bullhorn me-2 sidebar-icon-admin"></i>Announcements
             </a></li>

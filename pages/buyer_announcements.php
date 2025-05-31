@@ -90,6 +90,22 @@ function get_stall($a, $stalls) {
     white-space: pre-line;
     align-self: center;
 }
+.avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #0dcaf0 60%, #170e63 100%);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+  margin-right: 0.9rem;
+  box-shadow: 0 2px 8px rgba(23, 14, 99, 0.10);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
 </style>
 <div class="container-fluid px-4 pt-4">
     <div class="dashboard-section-title mb-3">Announcements</div>
@@ -99,7 +115,10 @@ function get_stall($a, $stalls) {
     <div class="announcement-feed">
     <?php foreach ($announcements as $a): ?>
         <div class="announcement-post">
-            <div class="card-header">
+            <div class="card-header" style="display:flex;align-items:center;gap:0.7rem;">
+                <div class="avatar">
+                    <?= empty($a['seller_id']) ? 'A' : strtoupper(substr($sellers[$a['seller_id']] ?? 'S', 0, 1)) ?>
+                </div>
                 <div>
                     <div class="author">
                         <?= empty($a['seller_id']) ? ($admins[1] ?? 'Admin') : htmlspecialchars($sellers[$a['seller_id']] ?? 'Seller') ?>

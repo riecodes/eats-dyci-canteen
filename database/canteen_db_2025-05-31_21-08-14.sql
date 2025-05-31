@@ -32,7 +32,7 @@ CREATE TABLE `announcement_reads` (
   KEY `announcement_id` (`announcement_id`),
   CONSTRAINT `announcement_reads_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `announcement_reads_ibfk_2` FOREIGN KEY (`announcement_id`) REFERENCES `announcements` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +41,6 @@ CREATE TABLE `announcement_reads` (
 
 LOCK TABLES `announcement_reads` WRITE;
 /*!40000 ALTER TABLE `announcement_reads` DISABLE KEYS */;
-INSERT INTO `announcement_reads` VALUES (1,9,1,'2025-05-30 09:42:41'),(7,11,1,'2025-05-30 09:43:25'),(25,10,1,'2025-05-30 11:29:31'),(31,11,2,'2025-05-30 11:52:08'),(32,10,2,'2025-05-30 11:52:22');
 /*!40000 ALTER TABLE `announcement_reads` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -66,7 +65,7 @@ CREATE TABLE `announcements` (
   KEY `stall_id` (`stall_id`),
   CONSTRAINT `announcements_ibfk_1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `announcements_ibfk_2` FOREIGN KEY (`stall_id`) REFERENCES `stalls` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -75,7 +74,6 @@ CREATE TABLE `announcements` (
 
 LOCK TABLES `announcements` WRITE;
 /*!40000 ALTER TABLE `announcements` DISABLE KEYS */;
-INSERT INTO `announcements` VALUES (1,'BUY 1 TAKE 1s','MILKTEAs','promo',NULL,NULL,'2025-05-30 00:37:19','../assets/imgs/img_6838fdbf66f8a.jpg'),(2,'pogi ako','real','info',NULL,NULL,'2025-05-30 03:52:03','../assets/imgs/img_68392b63b5568.jpg');
 /*!40000 ALTER TABLE `announcements` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -91,7 +89,7 @@ CREATE TABLE `canteens` (
   `name` varchar(100) NOT NULL,
   `image` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -100,7 +98,6 @@ CREATE TABLE `canteens` (
 
 LOCK TABLES `canteens` WRITE;
 /*!40000 ALTER TABLE `canteens` DISABLE KEYS */;
-INSERT INTO `canteens` VALUES (1,'Canteen 1','../assets/imgs/img_6838fcf82c484.webp'),(2,'Canteen 2','../assets/imgs/img_6838fd013c94d.jpg'),(3,'Canteen 3','../assets/imgs/img_6838fd0c884fc.jpg');
 /*!40000 ALTER TABLE `canteens` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -115,7 +112,11 @@ CREATE TABLE `categories` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  `seller_id` int(11) DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `seller_id` (`seller_id`),
+  CONSTRAINT `categories_ibfk_1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -125,7 +126,7 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (2,'Food','');
+INSERT INTO `categories` VALUES (1,'food','a',NULL,'../assets/imgs/category_683aa815e7b39.jpg'),(2,'food','aaaaaaaaaaa',NULL,'../assets/imgs/category_683aaa9bd9f72.webp');
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -146,7 +147,7 @@ CREATE TABLE `order_items` (
   KEY `fk_order_items_product` (`product_id`),
   CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`orderRef`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +156,6 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (6,'ORD68391547129fc',2,1),(7,'ORD6839156152c69',2,1),(8,'ORD6839278d03fc8',4,5);
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -187,7 +187,6 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES ('ORD68391547129fc',11,2.00,'2025-05-30 02:17:43','void','../assets/imgs/receipt_6839154712644.png','',0),('ORD6839156152c69',11,2.00,'2025-05-30 02:18:09','done','../assets/imgs/receipt_683915615288e.png','a',0),('ORD6839278d03fc8',11,5.00,'2025-05-30 03:35:41','queue','../assets/imgs/receipt_6839278d03c9b.jpg','sss',0);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -215,7 +214,7 @@ CREATE TABLE `products` (
   CONSTRAINT `fk_products_seller` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL,
   CONSTRAINT `products_ibfk_2` FOREIGN KEY (`stall_id`) REFERENCES `stalls` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -224,7 +223,6 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,9,'Pizza','Pizza',99.00,'../assets/imgs/products_6838ffb1b128b.jpg',2,1,8),(2,9,'1','1',2.00,'../assets/imgs/products_68390059bf016.png',2,1,7),(4,10,'1','1',99.01,NULL,2,2,50);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -263,6 +261,32 @@ LOCK TABLES `reviews` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `settings`
+--
+
+DROP TABLE IF EXISTS `settings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `value` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `settings`
+--
+
+LOCK TABLES `settings` WRITE;
+/*!40000 ALTER TABLE `settings` DISABLE KEYS */;
+INSERT INTO `settings` VALUES (1,'auto_void_enabled','0'),(2,'auto_void_time','11:47');
+/*!40000 ALTER TABLE `settings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `stalls`
 --
 
@@ -281,7 +305,7 @@ CREATE TABLE `stalls` (
   KEY `seller_id` (`seller_id`) USING BTREE,
   CONSTRAINT `stalls_ibfk_1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `stalls_ibfk_2` FOREIGN KEY (`canteen_id`) REFERENCES `canteens` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -290,7 +314,6 @@ CREATE TABLE `stalls` (
 
 LOCK TABLES `stalls` WRITE;
 /*!40000 ALTER TABLE `stalls` DISABLE KEYS */;
-INSERT INTO `stalls` VALUES (1,'Razzies','JUST BINGO MY LOCATIONs',9,1,'../assets/imgs/stall_6838fd2d054d2.jpg'),(2,'KKKs','WAHs',10,2,'../assets/imgs/stall_6838fd544f213.jpg');
 /*!40000 ALTER TABLE `stalls` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -313,7 +336,7 @@ CREATE TABLE `users` (
   `position` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -322,7 +345,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','a@a.com','$2y$10$oxeXOZcU5sSfIYkzZjtBEuxgbMNC6muwa0crfr.R1JvP5lG5WeVzS','admin','2025-05-27 04:37:18',NULL,NULL,NULL),(8,'Jervic Manalo','jervic@student.com','$2y$10$TRC0AlUFro8kF683MqshmembCm7aebPISPGM/CCNdKdyl7EidBJpa','buyer','2025-05-30 00:30:37',NULL,'CS','Teacher'),(9,'Cristina Maglanoc','cristina@seller.com','$2y$10$aM0Hh2Az25KSTHPkFvMZCOCZ4zbBSIpAz7QPQLwZU3miPdWsN6yMe','seller','2025-05-30 00:30:54','../assets/imgs/qr_seller_9.jpg',NULL,NULL),(10,'John Frederick','jf@seller.com','$2y$10$B8WQF2CCT/yOEQXj3/ELG.2BIy5R3T8PvZXxpp9Y.ZMDRIl6K/fY6','seller','2025-05-30 00:31:30','../assets/imgs/qr_seller_10.jpg',NULL,NULL),(11,'Andrew Tambac','andrew@student.com','$2y$10$M0mWg.M2SlfuAzqMld7NDuBngxOPE6gxstHMW6Kyk9X7KeaClUiUK','buyer','2025-05-30 00:31:53',NULL,'CPE','Student');
+INSERT INTO `users` VALUES (1,'Admin','a@a.com','$2y$10$oxeXOZcU5sSfIYkzZjtBEuxgbMNC6muwa0crfr.R1JvP5lG5WeVzS','admin','2025-05-27 04:37:18',NULL,NULL,NULL),(12,'seller','s@s.com','$2y$10$ALPKPtAiuE9Qeg3lwMZAiu.oS5iyQXLr6VpSOgoObBHD21Qqo9I5G','seller','2025-05-31 12:52:46',NULL,NULL,NULL),(13,'buyer','b@b.com','$2y$10$ECz4xZSB2Xje.QFhc1L4q.30OgnDZ2UdUgvq5iQASu4d/JGyUuIZC','buyer','2025-05-31 12:52:59',NULL,'CPE','Student');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -335,4 +358,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-30 11:55:54
+-- Dump completed on 2025-05-31 21:08:14
