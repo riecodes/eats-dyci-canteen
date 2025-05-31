@@ -1,0 +1,14 @@
+/* Cartoon Color Variables */
+:root {
+  --tomato-red: #FF6B6B;
+  --lettuce-green: #4ECDC4;
+  --cheese-yellow: #FFE66D;
+  --eggplant-purple: #6C5CE7;
+  --carrot-orange: #FD79A8;
+  --milk-white: #F8F9FA;
+  --hot-sauce-red: #EE5A24;
+  --mint-green: #00D2D3;
+}
+
+/* Font Imports */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;700&family=Nunito:wght@400;700&display=swap'); 

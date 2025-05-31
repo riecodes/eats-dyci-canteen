@@ -143,4 +143,27 @@ MIT License
 
 ---
 
-**For more details, see the code comments and inline documentation.** 
+**For more details, see the code comments and inline documentation.**
+
+## Cartoon Canteen System (2024 Redesign)
+
+This project introduces a vibrant, cartoon-style UI/UX for the canteen management system, inspired by the plan in REVISION.md. All new features are additive and do not disrupt legacy code.
+
+### New Files
+- `css/cartoon-style.css`: Base cartoon styles, color palette, utility classes
+- `css/cartoon-animations.css`: Cartoon-specific animations and accessibility toggle
+- `css/variables.css`: Color variables and font imports
+- `js/cartoon-effects.js`: Micro-interactions (e.g., confetti), animation toggles
+- `php/cartoon_nav.php`: Cartoon-style navigation bar include
+- `php/food_court_section.php`: Cartoon-style food court section include
+
+### How to Use
+- **CSS**: Link the new CSS files in your HTML/PHP templates (after legacy styles for override).
+- **JS**: Link `cartoon-effects.js` for micro-interactions and accessibility toggles.
+- **PHP**: Use `include 'php/cartoon_nav.php';` and `include 'php/food_court_section.php';` in your pages to add new cartoon components.
+- **Accessibility**: Use `toggleCartoonAnimations(false)` in JS to disable all cartoon animations for accessibility.
+
+### Migration
+- You can gradually migrate legacy sections to the new cartoon style by replacing or wrapping them with the new components and classes.
+
+See REVISION.md for the full design vision and roadmap. 

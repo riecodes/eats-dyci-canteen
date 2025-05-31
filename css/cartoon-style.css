@@ -1,0 +1,151 @@
+/* Cartoon Color Palette */
+:root {
+  --tomato-red: #FF6B6B;
+  --lettuce-green: #4ECDC4;
+  --cheese-yellow: #FFE66D;
+  --eggplant-purple: #6C5CE7;
+  --carrot-orange: #FD79A8;
+  --milk-white: #F8F9FA;
+  --hot-sauce-red: #EE5A24;
+  --mint-green: #00D2D3;
+}
+
+body.cartoon-theme {
+  background: var(--milk-white);
+  font-family: 'Quicksand', 'Nunito', Arial, sans-serif;
+  color: var(--tomato-red);
+}
+
+.food-court {
+  background: linear-gradient(135deg, var(--lettuce-green) 0%, var(--cheese-yellow) 100%);
+  border-radius: 2rem;
+  box-shadow: 0 8px 24px 0 rgba(255,107,107,0.15), 0 1.5px 0 0 var(--cheese-yellow);
+  padding: 2rem;
+  margin: 2rem auto;
+  max-width: 900px;
+}
+
+.menu-board {
+  background: #fffbe7;
+  border: 4px dashed var(--eggplant-purple);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 16px 0 rgba(108,92,231,0.10);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  font-family: 'Fredoka One', cursive, sans-serif;
+}
+
+.speech-bubble {
+  background: #fff;
+  border-radius: 2rem 2rem 2rem 0.5rem;
+  border: 3px solid var(--carrot-orange);
+  padding: 1rem 1.5rem;
+  position: relative;
+  margin: 1rem 0;
+}
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  left: 2rem;
+  bottom: -20px;
+  width: 30px;
+  height: 20px;
+  background: #fff;
+  border-left: 3px solid var(--carrot-orange);
+  border-bottom: 3px solid var(--carrot-orange);
+  border-radius: 0 0 0 1rem;
+}
+
+.cloud-nav {
+  background: var(--mint-green);
+  border-radius: 3rem;
+  box-shadow: 0 4px 16px 0 rgba(0,210,211,0.10);
+  padding: 1rem 2rem;
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.cartoon-btn {
+  background: var(--cheese-yellow);
+  color: var(--eggplant-purple);
+  border: 2px solid var(--eggplant-purple);
+  border-radius: 1.5rem;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.cartoon-btn:active {
+  transform: scale(0.95) rotate(-2deg);
+}
+
+/* Utility classes */
+.bouncy {
+  animation: bounce 1s infinite alternate;
+}
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-12px) scale(1.05); }
+}
+
+.sticker-effect {
+  box-shadow: 0 8px 24px 0 rgba(255,107,107,0.15), 0 1.5px 0 0 var(--cheese-yellow);
+  border-radius: 1.5rem 1.5rem 0.5rem 1.5rem;
+  position: relative;
+}
+
+/* Cartoon Menu Board (Chalkboard Effect) */
+.cartoon-menu-board {
+  background: #2d2d2d;
+  border: 5px solid var(--cheese-yellow);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px 0 rgba(44, 62, 80, 0.15);
+  color: #fffbe7;
+  font-family: 'Fredoka One', cursive, sans-serif;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+.cartoon-menu-board h2 {
+  color: var(--cheese-yellow);
+  text-shadow: 2px 2px 0 #222, 0 0 8px var(--cheese-yellow);
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+.cartoon-menu-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  font-size: 1.2rem;
+}
+.cartoon-menu-table th, .cartoon-menu-table td {
+  background: rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  text-align: left;
+  font-family: 'Fredoka One', cursive, sans-serif;
+  box-shadow: 0 2px 8px 0 rgba(44, 62, 80, 0.10);
+}
+.cartoon-menu-table th {
+  color: var(--cheese-yellow);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  border-bottom: 2px dashed var(--cheese-yellow);
+}
+.cartoon-menu-table td {
+  color: #fffbe7;
+}
+
+/* Mascot Image */
+.mascot-img {
+  display: inline-block;
+  height: 80px;
+  width: auto;
+  filter: drop-shadow(0 4px 12px var(--lettuce-green));
+  margin-bottom: 1rem;
+}
+
+/* Add more cartoon utility classes as needed */ 
