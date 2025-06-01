@@ -13,6 +13,6 @@
         <span class="topbar-user">
             <?php echo htmlspecialchars($_SESSION['user_name'] ?? ''); ?> (<?php echo htmlspecialchars($_SESSION['user_role'] ?? ''); ?>)
         </span>
-        <a href="login.php?logout=1" class="topbar-logout">Logout</a>
+        <a href="../index.php?logout=1" class="topbar-logout">Logout</a>
     </div>
 </div> 

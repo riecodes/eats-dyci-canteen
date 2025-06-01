@@ -2,10 +2,10 @@
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 if (isset($_GET['logout'])) {
     session_destroy();
-    header('Location: login.php');
+    header('Location: index.php');
     exit;
 }
-require_once '../includes/db.php';
+require_once 'includes/db.php';
 
 $email = $password = '';
 $error = '';
@@ -27,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_role'] = $user['role'];
             // Redirect by role
             if ($user['role'] === 'admin') {
-                header('Location: index.php?page=admin_dashboard');
+                header('Location: public/dashboard.php?page=admin_dashboard');
             } elseif ($user['role'] === 'seller') {
-                header('Location: index.php?page=seller_dashboard');
+                header('Location: public/dashboard.php?page=seller_dashboard');
             } else {
-                header('Location: index.php?page=buyer_order');
+                header('Location: public/dashboard.php?page=buyer_order');
             }
             exit;
         } else {
@@ -48,13 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/login.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/login.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <div class="login-container">
     <div class="d-flex align-items-center justify-content-center">
-        <img src="../assets/imgs/dyci-logo.png" alt="DYCI Logo" class="login-logo">        
+        <img src="assets/imgs/dyci-logo.png" alt="DYCI Logo" class="login-logo">        
     </div>
     <div class="login-title">EatsDYCI</div>
     <?php if ($error): ?>
