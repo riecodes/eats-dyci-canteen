@@ -367,6 +367,9 @@ foreach ($orders as $order) {
                                                     <div><strong>Position:</strong>
                                                         <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['position'] ?? '-') : '-' ?>
                                                     </div>
+                                                    <div><strong>Faculty:</strong>
+                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['faculty'] ?? '-') : '-' ?>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <hr>

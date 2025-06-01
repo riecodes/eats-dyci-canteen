@@ -119,7 +119,7 @@ $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DE
           <td><?= htmlspecialchars($a['type']) ?></td>
           <td>
             <?php if ($a['image']): ?>
-              <img src="<?= htmlspecialchars($a['image']) ?>" alt="Image" style="max-width:80px;max-height:80px;">
+              <img src="<?= htmlspecialchars($a['image']) ?>" alt="Image" style="max-width:80px;max-height:80px;cursor:pointer;" onclick="showAnnouncementImageModal('<?= htmlspecialchars($a['image']) ?>')">
             <?php endif; ?>
           </td>
           <td><?= date('Y-m-d H:i', strtotime($a['created_at'])) ?></td>
@@ -222,4 +222,21 @@ $announcements = $pdo->query('SELECT * FROM announcements ORDER BY created_at DE
       </div>
     </div>
   </div>
+  <!-- Announcement Image Modal -->
+  <div class="modal fade" id="announcementImageModal" tabindex="-1" aria-labelledby="announcementImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-transparent border-0">
+        <div class="modal-body text-center p-0">
+          <img id="announcementImageModalImg" src="" alt="Announcement Image" style="max-width:90vw;max-height:90vh;object-fit:contain;box-shadow:0 0 24px #0008;border-radius:1rem;">
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+  function showAnnouncementImageModal(src) {
+    var modal = new bootstrap.Modal(document.getElementById('announcementImageModal'));
+    document.getElementById('announcementImageModalImg').src = src;
+    modal.show();
+  }
+  </script>
 </div> 

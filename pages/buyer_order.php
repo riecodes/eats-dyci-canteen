@@ -188,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                 list($h, $m, $s) = array_pad(explode(':', $order_cutoff_time), 3, 0);
                 $cutoff_time = (clone $current_time)->setTime((int)$h, (int)$m, (int)$s);
                 if ($current_time >= $cutoff_time) {
-                    $order_error = 'Orders cannot be placed after ' . htmlspecialchars(substr($order_cutoff_time,0,5)) . '.';
+                    $order_error = 'Orders cannot be placed after ' . format_time_12h($order_cutoff_time) . '.';
                     $valid = false;
                 }
             }
@@ -225,7 +225,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 if (!$selected_canteen) {
     echo '<div class="dashboard-section-title mb-3"><div class="dashboard-card" style="font-size:1.5rem; font-weight:700; letter-spacing:2px; text-align:center;">CANTEENS</div></div>';
     // Show cutoff time info
-    echo '<div class="alert alert-info text-center mb-3">Orders cannot be placed after <strong>' . htmlspecialchars(substr($order_cutoff_time,0,5)) . '</strong> today.</div>';
+    if ($order_cutoff_enabled == '1') {
+        echo '<div class="alert alert-info text-center mb-3">Orders cannot be placed after <strong>' . format_time_12h($order_cutoff_time) . '</strong> today.</div>';
+    }
     // Search bar
     echo '<div class="mb-3"><input type="text" id="canteenSearch" class="form-control" placeholder="Search canteens by name..."></div>';
     echo '<div class="row dashboard-cards g-4 mb-4" id="canteenCards">';
@@ -475,5 +477,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     echo '</div>';
     echo '</div>';
     echo '<script>document.addEventListener("DOMContentLoaded",function(){var m=new bootstrap.Modal(document.getElementById("orderResultModal"));m.show();});</script>';
+}
+
+// Helper to format time to 12-hour with AM/PM
+function format_time_12h($time) {
+    return date('g:i A', strtotime($time));
 }
 ?>

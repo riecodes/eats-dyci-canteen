@@ -106,7 +106,7 @@ if ($orders) {
     $buyer_ids = array_unique(array_column($orders, 'user_id'));
     if ($buyer_ids) {
         $in = str_repeat('?,', count($buyer_ids) - 1) . '?';
-        $stmt = $pdo->prepare("SELECT id, name, email, department, position FROM users WHERE id IN ($in)");
+        $stmt = $pdo->prepare("SELECT id, name, email, department, position, faculty FROM users WHERE id IN ($in)");
         $stmt->execute($buyer_ids);
         foreach ($stmt->fetchAll() as $row) {
             $buyers[$row['id']] = $row;
@@ -341,10 +341,13 @@ foreach ($orders as $order) {
                                                         <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['email']) : '' ?>
                                                     </div>
                                                     <div><strong>Department:</strong>
-                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['department'] ?? '-') : '-' ?>
+                                                        <?= isset($buyers[$order['user_id']]) ? ($buyers[$order['user_id']]['department'] ?? '-') : '-' ?>
                                                     </div>
                                                     <div><strong>Position:</strong>
                                                         <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['position'] ?? '-') : '-' ?>
+                                                    </div>
+                                                    <div><strong>Faculty:</strong>
+                                                        <?= isset($buyers[$order['user_id']]) ? htmlspecialchars($buyers[$order['user_id']]['faculty'] ?? '-') : '-' ?>
                                                     </div>
                                                 </div>
                                             </div>

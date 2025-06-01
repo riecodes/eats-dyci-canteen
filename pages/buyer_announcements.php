@@ -135,9 +135,26 @@ function get_stall($a, $stalls) {
             <div class="post-title"><?= htmlspecialchars($a['title']) ?></div>
             <div class="post-message"><?= nl2br(htmlspecialchars($a['message'])) ?></div>
             <?php if (!empty($a['image'])): ?>
-                <img src="<?= htmlspecialchars($a['image']) ?>" class="post-image" alt="Announcement Image">
+                <img src="<?= htmlspecialchars($a['image']) ?>" class="post-image" alt="Announcement Image" style="cursor:pointer;" onclick="showAnnouncementImageModal('<?= htmlspecialchars($a['image']) ?>')">
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
     </div>
-</div> 
+</div>
+<!-- Announcement Image Modal -->
+<div class="modal fade" id="announcementImageModal" tabindex="-1" aria-labelledby="announcementImageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-body text-center p-0">
+        <img id="announcementImageModalImg" src="" alt="Announcement Image" style="max-width:90vw;max-height:90vh;object-fit:contain;box-shadow:0 0 24px #0008;border-radius:1rem;">
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function showAnnouncementImageModal(src) {
+  var modal = new bootstrap.Modal(document.getElementById('announcementImageModal'));
+  document.getElementById('announcementImageModalImg').src = src;
+  modal.show();
+}
+</script> 

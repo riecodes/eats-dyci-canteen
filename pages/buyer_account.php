@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'buyer') 
 }
 $buyer_id = $_SESSION['user_id'];
 // Fetch current buyer info
-$stmt = $pdo->prepare('SELECT name, email, department, position FROM users WHERE id = ? AND role = "buyer"');
+$stmt = $pdo->prepare('SELECT name, email, department, position, faculty FROM users WHERE id = ? AND role = "buyer"');
 $stmt->execute([$buyer_id]);
 $buyer = $stmt->fetch();
 if (!$buyer) {
@@ -20,8 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    $department = $_POST['department'] ?? null;
+    $department = trim($_POST['department'] ?? '');
+    if ($department === '') { $department = null; }
     $position = $_POST['position'] ?? null;
+    $faculty = trim($_POST['faculty'] ?? '');
+    if (($position ?? '') !== 'Teacher') {
+        $faculty = null;
+    }
+    if ($faculty === '') { $faculty = null; }
     if (!$name || !$email) {
         $error = 'Name and email are required.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -35,11 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
         } else {
             if ($password) {
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, password = ?, department = ?, position = ? WHERE id = ?');
-                $ok = $stmt->execute([$name, $email, $hash, $department, $position, $buyer_id]);
+                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, password = ?, department = ?, position = ?, faculty = ? WHERE id = ?');
+                $ok = $stmt->execute([$name, $email, $hash, $department, $position, $faculty, $buyer_id]);
             } else {
-                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, department = ?, position = ? WHERE id = ?');
-                $ok = $stmt->execute([$name, $email, $department, $position, $buyer_id]);
+                $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, department = ?, position = ?, faculty = ? WHERE id = ?');
+                $ok = $stmt->execute([$name, $email, $department, $position, $faculty, $buyer_id]);
             }
             if ($ok) {
                 $success = 'Account updated!';
@@ -74,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
         </div>
         <div class="mb-3">
             <label class="form-label" for="account_position">Identification</label>
-            <select class="form-select" id="account_position" name="position" required>
+            <select class="form-select" id="account_position" name="position" required onchange="toggleFacultyDropdown()">                
                 <option value="Student" <?= ($buyer['position'] ?? '') === 'Student' ? 'selected' : '' ?>>Student</option>
                 <option value="Staff" <?= ($buyer['position'] ?? '') === 'Staff' ? 'selected' : '' ?>>Staff</option>
                 <option value="Teacher" <?= ($buyer['position'] ?? '') === 'Teacher' ? 'selected' : '' ?>>Teacher</option>
@@ -82,12 +88,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_account'])) {
         </div>
         <div class="mb-3">
             <label class="form-label" for="account_department">Department</label>
-            <select class="form-select" id="account_department" name="department" required>
+            <select class="form-select" id="account_department" name="department">
+                <option value="">No Department</option>
                 <option value="CPE" <?= ($buyer['department'] ?? '') === 'CPE' ? 'selected' : '' ?>>CPE</option>
                 <option value="CS" <?= ($buyer['department'] ?? '') === 'CS' ? 'selected' : '' ?>>CS</option>
                 <option value="IT" <?= ($buyer['department'] ?? '') === 'IT' ? 'selected' : '' ?>>IT</option>
             </select>
         </div>
+        <div class="mb-3" id="facultyDropdownContainer" style="display:<?= ($buyer['position'] ?? '') === 'Teacher' ? '' : 'none' ?>;">
+            <label class="form-label" for="account_faculty">Faculty</label>
+            <select class="form-select" id="account_faculty" name="faculty">
+                <option value="">No Faculty</option>
+                <option value="CCS" <?= ($buyer['faculty'] ?? '') === 'CCS' ? 'selected' : '' ?>>CCS</option>
+            </select>
+        </div>
+        <script>
+        function toggleFacultyDropdown() {
+            var pos = document.getElementById('account_position').value;
+            var facultyDiv = document.getElementById('facultyDropdownContainer');
+            var facultySelect = document.getElementById('account_faculty');
+            if (pos === 'Teacher') {
+                facultyDiv.style.display = '';
+            } else {
+                facultyDiv.style.display = 'none';
+                if (facultySelect) facultySelect.value = '';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleFacultyDropdown();
+            document.getElementById('account_position').addEventListener('change', toggleFacultyDropdown);
+        });
+        </script>
         <button type="submit" class="btn btn-primary">Save Changes</button>
     </form>
 </div>
