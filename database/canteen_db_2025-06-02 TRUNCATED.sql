@@ -117,7 +117,7 @@ CREATE TABLE `categories` (
   PRIMARY KEY (`id`),
   KEY `seller_id` (`seller_id`),
   CONSTRAINT `categories_ibfk_1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,7 +126,6 @@ CREATE TABLE `categories` (
 
 LOCK TABLES `categories` WRITE;
 /*!40000 ALTER TABLE `categories` DISABLE KEYS */;
-INSERT INTO `categories` VALUES (1,'food','a',NULL,'../assets/imgs/category_683aa815e7b39.jpg'),(2,'food','aaaaaaaaaaa',NULL,'../assets/imgs/category_683aaa9bd9f72.webp');
 /*!40000 ALTER TABLE `categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -273,7 +272,7 @@ CREATE TABLE `settings` (
   `value` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -282,7 +281,7 @@ CREATE TABLE `settings` (
 
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
-INSERT INTO `settings` VALUES (1,'auto_void_enabled','0'),(2,'auto_void_time','11:47');
+INSERT INTO `settings` VALUES (1,'auto_void_enabled','1'),(2,'auto_void_time','23:11'),(3,'order_cutoff_time','14:45:00'),(4,'order_cutoff_enabled','0');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -334,9 +333,10 @@ CREATE TABLE `users` (
   `qr_code` varchar(255) DEFAULT NULL,
   `department` varchar(100) DEFAULT NULL,
   `position` varchar(100) DEFAULT NULL,
+  `faculty` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -345,7 +345,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'Admin','a@a.com','$2y$10$oxeXOZcU5sSfIYkzZjtBEuxgbMNC6muwa0crfr.R1JvP5lG5WeVzS','admin','2025-05-27 04:37:18',NULL,NULL,NULL),(12,'seller','s@s.com','$2y$10$ALPKPtAiuE9Qeg3lwMZAiu.oS5iyQXLr6VpSOgoObBHD21Qqo9I5G','seller','2025-05-31 12:52:46',NULL,NULL,NULL),(13,'buyer','b@b.com','$2y$10$ECz4xZSB2Xje.QFhc1L4q.30OgnDZ2UdUgvq5iQASu4d/JGyUuIZC','buyer','2025-05-31 12:52:59',NULL,'CPE','Student');
+INSERT INTO `users` VALUES (1,'Admin','a@a.com','$2y$10$oxeXOZcU5sSfIYkzZjtBEuxgbMNC6muwa0crfr.R1JvP5lG5WeVzS','admin','2025-05-27 04:37:18',NULL,NULL,NULL,NULL),(12,'seller','s@s.com','$2y$10$ALPKPtAiuE9Qeg3lwMZAiu.oS5iyQXLr6VpSOgoObBHD21Qqo9I5G','seller','2025-05-31 12:52:46',NULL,NULL,NULL,NULL),(13,'buyer','b@b.com','$2y$10$ECz4xZSB2Xje.QFhc1L4q.30OgnDZ2UdUgvq5iQASu4d/JGyUuIZC','buyer','2025-05-31 12:52:59',NULL,'IT','Teacher','CCS'),(14,'s2','s2@s.com','$2y$10$1qyaiWDCCKIhnjtjIF7RSOVOe4OnJRNjmhykLI1tsXrkwswzsvTSi','seller','2025-06-01 13:17:50',NULL,NULL,NULL,NULL),(15,'teacher','t@t.com','$2y$10$HeWKvMqqTgtOJIQNOJ5Fd.Z02lJSH33KVpvUQMrNN0/imFQ6OhJAy','buyer','2025-06-01 15:51:40',NULL,'CPE','Teacher','CCS'),(16,'asg','t@tt.com','$2y$10$8U2OnVKzkuHNLKS34lzgf.ECRIDJOJSClXOqpKCXVswp04TkJL6AW','buyer','2025-06-01 16:01:02',NULL,'CS','Student',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -358,4 +358,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-31 21:08:14
+-- Dump completed on 2025-06-02  0:44:45
