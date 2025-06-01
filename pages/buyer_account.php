@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 require_once '../includes/config.php';
 require_once '../includes/db.php';
 if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'buyer') {
-    header('location:../public/login.php');
+    header('location:../index.php');
     exit();
 }
 $buyer_id = $_SESSION['user_id'];

@@ -9,6 +9,22 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'buyer') 
     return;
 }
 
+// Fetch order cutoff enabled setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'order_cutoff_enabled'");
+$stmt->execute();
+$order_cutoff_enabled = $stmt->fetchColumn();
+if ($order_cutoff_enabled === false) {
+    $order_cutoff_enabled = '1';
+}
+
+// Fetch order cutoff time setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'order_cutoff_time'");
+$stmt->execute();
+$order_cutoff_time = $stmt->fetchColumn();
+if ($order_cutoff_time === false) {
+    $order_cutoff_time = '14:45:00';
+}
+
 // --- CART LOGIC ---
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -123,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
         }
         if (!$valid) {
             // Do not proceed
-    } else {
+        } else {
             // Enforce max 5 total items per cart (not just unique products)
             $total_qty = array_sum($cart);
             if ($total_qty > 5) {
@@ -132,79 +148,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
             }
             // 2. Check stock for each item
             $cart_products = [];
-                foreach ($cart as $product_id => $qty) {
-                    $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
-                    $stmt->execute([$product_id]);
+            foreach ($cart as $product_id => $qty) {
+                $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ?');
+                $stmt->execute([$product_id]);
                 $prod = $stmt->fetch();
                 if (!$prod || $qty > $prod['stock']) {
                     $valid = false;
                     $order_error = 'Insufficient stock for ' . htmlspecialchars($prod['name'] ?? 'a product') . '.';
                     break;
                 }
-                    $cart_products[$product_id] = $prod;
+                $cart_products[$product_id] = $prod;
             }
-                // 3. Validate receipt image (portrait, file type)
-                $receipt_path = null;
+            // 3. Validate receipt image (portrait, file type)
+            $receipt_path = null;
             if ($valid) {
-                    if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
-                        $img_info = getimagesize($_FILES['receipt_image']['tmp_name']);
-                        if ($img_info && $img_info[1] > $img_info[0]) { // portrait
-                            $ext = pathinfo($_FILES['receipt_image']['name'], PATHINFO_EXTENSION);
-                            $target = '../assets/imgs/receipt_' . uniqid() . '.' . $ext;
-                            if (move_uploaded_file($_FILES['receipt_image']['tmp_name'], $target)) {
-                                $receipt_path = $target;
-                            } else {
-                                $order_error = 'Failed to upload receipt image.';
-                                $valid = false;
-                            }
+                if (isset($_FILES['receipt_image']) && $_FILES['receipt_image']['error'] === UPLOAD_ERR_OK) {
+                    $img_info = getimagesize($_FILES['receipt_image']['tmp_name']);
+                    if ($img_info && $img_info[1] > $img_info[0]) { // portrait
+                        $ext = pathinfo($_FILES['receipt_image']['name'], PATHINFO_EXTENSION);
+                        $target = '../assets/imgs/receipt_' . uniqid() . '.' . $ext;
+                        if (move_uploaded_file($_FILES['receipt_image']['tmp_name'], $target)) {
+                            $receipt_path = $target;
                         } else {
-                        $order_error = 'Receipt image must be portrait (height greater than width). Please upload a portrait image.';
+                            $order_error = 'Failed to upload receipt image.';
                             $valid = false;
                         }
                     } else {
-                        $order_error = 'Receipt image is required.';
+                        $order_error = 'Receipt image must be portrait (height greater than width). Please upload a portrait image.';
                         $valid = false;
                     }
+                } else {
+                    $order_error = 'Receipt image is required.';
+                    $valid = false;
                 }
-            // Prevent orders after 2:45 PM
-            $current_time = new DateTime();
-            $cutoff_time = (clone $current_time)->setTime(14, 45, 0); // 2:45 PM today
-            if ($current_time >= $cutoff_time) {
-                $order_error = 'Orders cannot be placed after 2:45 PM.';
-                $valid = false;
+            }
+            // Prevent orders after cutoff time if enabled
+            if ($order_cutoff_enabled == '1') {
+                $current_time = new DateTime();
+                list($h, $m, $s) = array_pad(explode(':', $order_cutoff_time), 3, 0);
+                $cutoff_time = (clone $current_time)->setTime((int)$h, (int)$m, (int)$s);
+                if ($current_time >= $cutoff_time) {
+                    $order_error = 'Orders cannot be placed after ' . htmlspecialchars(substr($order_cutoff_time,0,5)) . '.';
+                    $valid = false;
                 }
-                // 4. Insert order
-                if ($valid) {
-                    $orderRef = uniqid('ORD');
-                    $total_price = 0;
+            }
+            // 4. Insert order
+            if ($valid) {
+                $orderRef = uniqid('ORD');
+                $total_price = 0;
+                foreach ($cart as $product_id => $qty) {
+                    $total_price += $cart_products[$product_id]['price'] * $qty;
+                }
+                $note = trim($_POST['order_note'] ?? '');
+                $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price, receipt_image, note, status) VALUES (?, ?, ?, ?, ?, ?)');
+                if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'queue'])) {
+                    // 5. Insert order items and update stock
                     foreach ($cart as $product_id => $qty) {
-                        $total_price += $cart_products[$product_id]['price'] * $qty;
+                        $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
+                        $stmt->execute([$orderRef, $product_id, $qty]);
+                        // Update stock
+                        $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+                        $stmt->execute([$qty, $product_id]);
                     }
-                    $note = trim($_POST['order_note'] ?? '');
-                    $stmt = $pdo->prepare('INSERT INTO orders (orderRef, user_id, total_price, receipt_image, note, status) VALUES (?, ?, ?, ?, ?, ?)');
-                    if ($stmt->execute([$orderRef, $user_id, $total_price, $receipt_path, $note, 'queue'])) {
-                        // 5. Insert order items and update stock
-                        foreach ($cart as $product_id => $qty) {
-                            $stmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)');
-                            $stmt->execute([$orderRef, $product_id, $qty]);
-                            // Update stock
-                            $stmt = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
-                            $stmt->execute([$qty, $product_id]);
-                        }
-                        // 6. Clear cart
+                    // 6. Clear cart
                     $_SESSION['cart'] = [];
                     $order_success = 'Order placed successfully!';
                 } else {
                     $order_error = 'Failed to place order.';
+                }
             }
         }
     }
-}
 }
 
 // Show canteens as cards at the top
 if (!$selected_canteen) {
     echo '<div class="dashboard-section-title mb-3"><div class="dashboard-card" style="font-size:1.5rem; font-weight:700; letter-spacing:2px; text-align:center;">CANTEENS</div></div>';
+    // Show cutoff time info
+    echo '<div class="alert alert-info text-center mb-3">Orders cannot be placed after <strong>' . htmlspecialchars(substr($order_cutoff_time,0,5)) . '</strong> today.</div>';
     // Search bar
     echo '<div class="mb-3"><input type="text" id="canteenSearch" class="form-control" placeholder="Search canteens by name..."></div>';
     echo '<div class="row dashboard-cards g-4 mb-4" id="canteenCards">';
@@ -215,7 +236,7 @@ if (!$selected_canteen) {
         echo '<img src="' . $img . '" class="card-img-top mb-2" alt="Canteen Image" style="aspect-ratio:5/4; width:100%; max-width:260px; object-fit:cover; border-radius:1rem; margin:auto; display:block;">';
         echo '<div class="card-body p-0">';
         echo '<h5 class="card-title mb-2 text-center canteen-name" style="font-size:1.2rem; font-weight:600;">' . htmlspecialchars($canteen['name']) . '</h5>';
-        echo '<form method="get" action="index.php">';
+        echo '<form method="get" action="dashboard.php">';
         echo '<input type="hidden" name="page" value="buyer_order">';
         echo '<input type="hidden" name="canteen_id" value="' . $canteen['id'] . '">';
         echo '<button type="submit" class="btn btn-primary w-100">Select</button>';
@@ -253,8 +274,8 @@ if ($selected_canteen && !$selected_stall) {
         echo '<div class="card-body p-0">';
         echo '<h5 class="card-title mb-2 text-center stall-name" style="font-size:1.2rem; font-weight:600;">' . htmlspecialchars($stall['name']) . '</h5>';
         echo '<p class="card-text mb-2 text-center">' . htmlspecialchars($stall['description'] ?? '') . '</p>';
-        echo '<form method="get" action="index.php">';
-        echo '<input type="hidden" name="page" value="buyer_order">';
+        echo '<form method="get" action="dashboard.php">';
+        echo '<input type="hidden" name="page" value="buyer_order">';   
         echo '<input type="hidden" name="canteen_id" value="' . $selected_canteen . '">';
         echo '<input type="hidden" name="stall_id" value="' . $stall['id'] . '">';
         echo '<button type="submit" class="btn btn-primary w-100">Select</button>';
@@ -455,3 +476,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
     echo '</div>';
     echo '<script>document.addEventListener("DOMContentLoaded",function(){var m=new bootstrap.Modal(document.getElementById("orderResultModal"));m.show();});</script>';
 }
+?>

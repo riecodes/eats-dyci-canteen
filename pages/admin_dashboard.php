@@ -1,6 +1,6 @@
 <?php
 if (!isset($_SESSION['user_id'])) {
-    header('location:../public/login.php');
+    header('location:../index.php');
     exit;
 }
 require_once __DIR__ . '/../includes/db.php';

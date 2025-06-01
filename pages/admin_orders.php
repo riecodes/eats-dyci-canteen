@@ -6,9 +6,11 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 require_once __DIR__ . '/../includes/db.php';
 
 // Handle auto-void toggle and time
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_auto_void'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['save_auto_void']) || isset($_POST['save_order_cutoff']))) {
     $enabled = isset($_POST['auto_void_enabled']) ? '1' : '0';
     $void_time = isset($_POST['auto_void_time']) ? $_POST['auto_void_time'] : '15:00:00';
+    $cutoff_enabled = isset($_POST['order_cutoff_enabled']) ? '1' : '0';
+    $cutoff_time = isset($_POST['order_cutoff_time']) ? $_POST['order_cutoff_time'] : '14:45:00';
     $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='auto_void_enabled'");
     $stmt->execute([$enabled]);
     // Save or insert auto_void_time
@@ -20,6 +22,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_auto_void'])) {
     } else {
         $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='auto_void_time'");
         $stmt->execute([$void_time]);
+    }
+    // Save or insert order_cutoff_enabled
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE name='order_cutoff_enabled'");
+    $stmt->execute();
+    if ($stmt->fetchColumn() == 0) {
+        $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('order_cutoff_enabled', ?)");
+        $stmt->execute([$cutoff_enabled]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='order_cutoff_enabled'");
+        $stmt->execute([$cutoff_enabled]);
+    }
+    // Save or insert order_cutoff_time
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE name='order_cutoff_time'");
+    $stmt->execute();
+    if ($stmt->fetchColumn() == 0) {
+        $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('order_cutoff_time', ?)");
+        $stmt->execute([$cutoff_time]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE settings SET value=? WHERE name='order_cutoff_time'");
+        $stmt->execute([$cutoff_time]);
     }
     header('Location: ' . $_SERVER['REQUEST_URI']);
     exit;
@@ -41,6 +63,24 @@ $auto_void_time = $stmt->fetchColumn();
 if ($auto_void_time === false) {
     $auto_void_time = '15:00:00';
     $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('auto_void_time', '15:00:00')");
+    $stmt->execute();
+}
+// Fetch order cutoff enabled setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'order_cutoff_enabled'");
+$stmt->execute();
+$order_cutoff_enabled = $stmt->fetchColumn();
+if ($order_cutoff_enabled === false) {
+    $order_cutoff_enabled = '1';
+    $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('order_cutoff_enabled', '1')");
+    $stmt->execute();
+}
+// Fetch order cutoff time setting
+$stmt = $pdo->prepare("SELECT value FROM settings WHERE name = 'order_cutoff_time'");
+$stmt->execute();
+$order_cutoff_time = $stmt->fetchColumn();
+if ($order_cutoff_time === false) {
+    $order_cutoff_time = '14:45:00';
+    $stmt = $pdo->prepare("INSERT INTO settings (name, value) VALUES ('order_cutoff_time', '14:45:00')");
     $stmt->execute();
 }
 
@@ -154,6 +194,14 @@ foreach ($orders as $order) {
         </label>
         <input type="time" name="auto_void_time" value="<?= htmlspecialchars(substr($auto_void_time,0,5)) ?>" class="form-control d-inline-block" style="width:135px; margin-left:8px; margin-right:8px; vertical-align:middle;" required>
         <button type="submit" name="save_auto_void" class="btn btn-primary btn-sm ms-2">Save</button>
+    </form>
+    <form method="post" action="" class="mb-3">
+        <label class="form-check-label">
+            <input type="checkbox" class="form-check-input" name="order_cutoff_enabled" value="1" <?= $order_cutoff_enabled == '1' ? 'checked' : '' ?>>
+            Order cannot be placed after
+        </label>
+        <input type="time" name="order_cutoff_time" value="<?= htmlspecialchars(substr($order_cutoff_time,0,5)) ?>" class="form-control d-inline-block" style="width:135px; margin-left:8px; margin-right:8px; vertical-align:middle;" required>
+        <button type="submit" name="save_order_cutoff" class="btn btn-primary btn-sm ms-2">Save</button>
     </form>
     <div class="dashboard-section-title mb-3">All Orders</div>    
     <?php if ($status_success): ?><div class="alert alert-success mb-2"><?= $status_success ?></div><?php endif; ?>
