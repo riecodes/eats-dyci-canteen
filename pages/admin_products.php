@@ -31,8 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_product'])) {
             $image_url = $target;
         }
     }
-    if (!$name || !$price || !$stall_id || !$seller_id) {
-        $add_error = 'Name, price, seller, and stall are required.';
+    if (!$name || !$price || !$stall_id || !$seller_id || !$category_id) {
+        $add_error = 'Name, price, seller, stall, and category are required.';
     } else {
         $stmt = $pdo->prepare("INSERT INTO products (name, description, price, image, category_id, stall_id, seller_id, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         if ($stmt->execute([$name, $description, $price, $image_url, $category_id, $stall_id, $seller_id, $stock])) {
@@ -229,8 +229,8 @@ $products = $prod_stmt->fetchAll();
                 </div>
                 <div class="mb-3">
                     <label class="form-label" for="add_product_category_id">Category</label>
-                    <select class="form-select" id="add_product_category_id" name="category_id">
-                        <option value="">None</option>
+                    <select class="form-select" id="add_product_category_id" name="category_id" required>
+                        <option value="">Select Category</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
                         <?php endforeach; ?>
